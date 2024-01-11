@@ -29,4 +29,8 @@
     <string name="enter_phone_number">Enter Phone Number</string>
     <string name="send_code">Send Code</string>
     <string name="my_doctor">My Doctor</string>
+    <string-array name="user_roles">
+        <item>Patient</item>
+        <item>Doctor</item>
+    </string-array>
 </resources>

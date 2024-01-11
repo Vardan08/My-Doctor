@@ -57,4 +57,5 @@ public class TodayPatients extends Fragment {
 
         fragmentTransaction.commit();
     }
+
 }
