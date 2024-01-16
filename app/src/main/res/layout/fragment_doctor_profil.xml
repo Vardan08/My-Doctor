@@ -98,14 +98,6 @@
                 android:layout_marginTop="8dp"
                 android:text="+1234567890"/>
 
-            <Button
-                android:id="@+id/button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/textPhone"
-                android:layout_marginTop="16dp"
-                android:text="Verification" />
-
         </RelativeLayout>
     </androidx.cardview.widget.CardView>
 </FrameLayout>

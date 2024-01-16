@@ -1,6 +1,7 @@
 package com.example.personalhealthcard;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -88,6 +89,7 @@ public class LoginPage extends AppCompatActivity {
         Intent intent = new Intent(LoginPage.this, ForgotPassword.class);
         startActivity(intent);
     }
+
 
     private void openPatientHomePage(){
         Intent intent = new Intent(this, PatientsHomePage.class);
