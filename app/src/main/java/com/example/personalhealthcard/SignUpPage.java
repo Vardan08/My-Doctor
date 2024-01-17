@@ -115,6 +115,29 @@ public class SignUpPage extends AppCompatActivity {
         signUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Get user input from EditText fields
+                String fullName = fullNameEditText.getText().toString().trim();
+                String email = emailEditText.getText().toString().trim();
+                String mobileNumber = mobileNumberEditText.getText().toString().trim();
+                String location = locationEditText.getText().toString().trim();
+                String password = passwordEditText.getText().toString().trim();
+                String confirmPassword = confirmPasswordEditText.getText().toString().trim();
+
+                // Check if any of the fields is empty
+                if (fullName.isEmpty() || email.isEmpty() || mobileNumber.isEmpty() ||
+                        location.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                    Toast.makeText(SignUpPage.this, "Please fill out all the fields", Toast.LENGTH_SHORT).show();
+                    return; // Stop further execution if any field is empty
+                }
+
+                // Validate email format using a regular expression
+                if (!isValidEmail(email)) {
+                    Toast.makeText(SignUpPage.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+                    return; // Stop further execution if email is not valid
+                }
+
+                // Additional validation checks if needed
+
                 String selectedRole = spinner.getSelectedItem().toString();
                 if ("Doctor".equals(selectedRole)) {
                     if (imageUri != null) {
@@ -173,7 +196,10 @@ public class SignUpPage extends AppCompatActivity {
         });
     }
 
-
+    private boolean isValidEmail(String email) {
+        String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+        return email.matches(emailPattern);
+    }
 
     private void openLoginPage() {
         // Handle the navigation to the login page here
