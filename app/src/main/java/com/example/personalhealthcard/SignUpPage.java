@@ -136,6 +136,11 @@ public class SignUpPage extends AppCompatActivity {
                     return; // Stop further execution if email is not valid
                 }
 
+                if (!password.equals(confirmPassword)) {
+                    Toast.makeText(SignUpPage.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                    return; // Stop further execution if passwords do not match
+                }
+
                 // Additional validation checks if needed
 
                 String selectedRole = spinner.getSelectedItem().toString();
