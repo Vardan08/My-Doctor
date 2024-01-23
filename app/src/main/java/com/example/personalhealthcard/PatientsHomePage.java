@@ -1,7 +1,9 @@
 package com.example.personalhealthcard;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Bundle;
@@ -43,6 +45,40 @@ public class PatientsHomePage extends AppCompatActivity {
                 setNewFragment(messages);
             }
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Call the method to handle back press
+                exitApplicationIfInTodayPatientsFragment();
+            }
+        });
+    }
+
+    private void exitApplicationIfInTodayPatientsFragment() {
+        // Check if the current fragment is TodayPatients
+        Fragment currentFragment = getCurrentFragment();
+
+        if (currentFragment != null && currentFragment instanceof AddVisit) {
+            // If yes, finish the activity and exit the application
+            finishAffinity();
+        } else {
+            // If not, pop the fragment from the back stack or finish the activity
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            int backStackEntryCount = fragmentManager.getBackStackEntryCount();
+
+            if (backStackEntryCount > 0) {
+                // If there are fragments in the back stack, pop the stack
+                fragmentManager.popBackStack();
+            } else {
+                // If the back stack is empty, finish the activity
+                finish();
+            }
+        }
+    }
+
+    private Fragment getCurrentFragment() {
+        return getSupportFragmentManager().findFragmentById(R.id.content_of_three_buttons);
     }
     private void setNewFragment(Fragment fragment){
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
