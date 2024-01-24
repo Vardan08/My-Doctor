@@ -24,7 +24,7 @@
             android:id="@+id/todayPatients"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="80dp"
+            android:layout_marginEnd="30dp"
             android:clickable="true"
             app:srcCompat="@drawable/home_page" />
 
@@ -32,9 +32,18 @@
             android:id="@+id/messages"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="80dp"
+            android:layout_marginEnd="30dp"
             android:clickable="true"
             app:srcCompat="@android:drawable/ic_dialog_email" />
+
+        <!-- Новая кнопка добавлена здесь -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/questionnaireButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="30dp"
+            android:clickable="true"
+            app:srcCompat="@drawable/questionnaire_icon_3"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/profile"
@@ -44,6 +53,7 @@
             app:srcCompat="@drawable/user" />
 
     </LinearLayout>
+
 
     <FrameLayout
         android:id="@+id/content_of_three_buttons"

@@ -12,7 +12,7 @@ import android.view.View;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class PatientsHomePage extends AppCompatActivity {
-    private FloatingActionButton todayPatientsButton, messagesButton, profileButton;
+    private FloatingActionButton todayPatientsButton, messagesButton, profileButton, questionnaireButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,6 +20,8 @@ public class PatientsHomePage extends AppCompatActivity {
         todayPatientsButton = findViewById(R.id.todayPatients);
         messagesButton = findViewById(R.id.messages);
         profileButton = findViewById(R.id.profile);
+        questionnaireButton = findViewById(R.id.questionnaireButton);
+
         AddVisit addVisit = new AddVisit();
         setNewFragment(addVisit);
 
@@ -43,6 +45,14 @@ public class PatientsHomePage extends AppCompatActivity {
             public void onClick(View v) {
                 PatientMessages messages = new PatientMessages();
                 setNewFragment(messages);
+            }
+        });
+
+        questionnaireButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ChildrenPatientRegistration childrenPatientRegistration = new ChildrenPatientRegistration();
+                setNewFragment(childrenPatientRegistration);
             }
         });
 
