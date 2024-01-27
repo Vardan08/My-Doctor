@@ -42,7 +42,7 @@
 
             <!-- Header Row -->
             <TextView
-                android:layout_width="94dp"
+                android:layout_width="59dp"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:text="Name of the vaccine"
@@ -58,14 +58,14 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="163dp"
                 android:layout_height="match_parent"
                 android:padding="8dp"
                 android:text="Vaccination period"
                 android:textStyle="bold" />
 
             <TextView
-                android:layout_width="103dp"
+                android:layout_width="76dp"
                 android:layout_height="match_parent"
                 android:padding="8dp"
                 android:text="received/don't receive"

@@ -79,8 +79,8 @@
 
             <TextView
                 android:id="@+id/fullNameTextView3"
-                android:layout_width="303dp"
-                android:layout_height="100dp"
+                android:layout_width="256dp"
+                android:layout_height="108dp"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="45dp"
                 android:text="description"
