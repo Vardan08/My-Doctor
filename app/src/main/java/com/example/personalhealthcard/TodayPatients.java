@@ -1,9 +1,7 @@
 package com.example.personalhealthcard;
 
-import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -13,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -45,7 +42,7 @@ public class TodayPatients extends Fragment {
     }
 
     private void openTodayPatientsPage() {
-        PatientsQuestionnaire anotherFragment = new PatientsQuestionnaire();
+        DoctorQuestionnaire anotherFragment = new DoctorQuestionnaire();
 
         androidx.fragment.app.FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
 

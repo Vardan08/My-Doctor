@@ -13,13 +13,13 @@ import android.widget.Spinner;
 import java.util.ArrayList;
 
 
-public class PatientsQuestionnaire extends Fragment {
+public class DoctorQuestionnaire extends Fragment {
     Spinner receiving;
     ArrayList receivingArrayList;
     ArrayAdapter receivingAdapter;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.fragment_patients_questionnaire, container, false);
+        View view =  inflater.inflate(R.layout.fragment_doctors_questionnaire, container, false);
         receiving = view.findViewById(R.id.receiving);
         receivingArrayList = new ArrayList();
         receivingArrayList.add("is received?");

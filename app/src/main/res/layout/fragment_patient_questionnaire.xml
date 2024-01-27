@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background_color"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/titleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*"
+        android:layout_marginTop="50dp">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Header Row -->
+            <TextView
+                android:layout_width="94dp"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="Name of the vaccine"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="match_parent"
+                android:inputType="textMultiLine"
+                android:padding="8dp"
+                android:text="Number of vaccinations"
+
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:text="Vaccination period"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="103dp"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:text="received/don't receive"
+                android:textStyle="bold" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:text="ԲՑԺ" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:text="1" />
+
+            <TextView
+                android:layout_width="135dp"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="24-48 after birth within the hour" />
+
+            <TextView
+                android:id="@+id/receiving"
+                android:layout_width="63dp"
+                android:layout_height="39dp"
+                android:text="@string/receive"/>
+
+        </TableRow>
+
+
+    </TableLayout>
+
+
+
+</FrameLayout>
