@@ -98,29 +98,13 @@
                 android:layout_marginTop="8dp"
                 android:text="+1234567890"/>
 
-            <!-- New TextViews for Doctor -->
-            <TextView
-                android:id="@+id/textDoctorLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/textPhone"
-                android:layout_marginTop="16dp"
-                android:text="Doctor:"
-                android:textStyle="bold"/>
 
-            <TextView
-                android:id="@+id/textDoctorName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/textDoctorLabel"
-                android:layout_marginTop="8dp"
-                android:text="Dr. Smith"/>
 
             <Button
                 android:id="@+id/logOut"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/textDoctorName"
+                android:layout_below="@id/textPhone"
                 android:layout_marginTop="16dp"
                 android:text="Log out" />
         </RelativeLayout>
