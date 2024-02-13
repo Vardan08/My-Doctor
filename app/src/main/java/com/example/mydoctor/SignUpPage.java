@@ -1,15 +1,21 @@
 package com.example.mydoctor;
 
+import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -21,8 +27,17 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignUpPage extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
@@ -39,6 +54,7 @@ public class SignUpPage extends AppCompatActivity {
     ArrayList<String> spinnerArrList;
     ArrayAdapter<String> spinnerArrAdapter;
     ImageView smallPhotoImageView, extraImageView1, extraImageView2;
+    FirebaseFirestore db;
 
 
     @Override
@@ -140,18 +156,36 @@ public class SignUpPage extends AppCompatActivity {
                     return; // Stop further execution if passwords do not match
                 }
 
+
                 // Additional validation checks if needed
 
                 String selectedRole = spinner.getSelectedItem().toString();
-                if ("Doctor".equals(selectedRole)) {
-                    if (imageUri != null) {
-                        openDoctorsLoginPage();
-                    } else {
-                        Toast.makeText(SignUpPage.this, "Please attach a photo", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    openPatientLoginPage();
+                if ("Doctor".equals(selectedRole) && smallPhotoImageView.getDrawable() != null
+                        && extraImageView1.getDrawable() != null && extraImageView2.getDrawable() != null) {
+
                 }
+
+
+                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole);
+
+                    db = FirebaseFirestore.getInstance();
+                    db.collection("users/").document(fullName)
+                            .set(newUser)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    Log.d(TAG, "Document successfully added!");
+                                    // Navigate to the next appropriate page or show a success message
+                                    openLoginPage();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.w(TAG, "Error adding document", e);
+                                    // Handle the error, such as showing a failure message
+                                }
+                            });
             }
         });
 
@@ -249,11 +283,6 @@ public class SignUpPage extends AppCompatActivity {
         }
     }
 
-    private void openDoctorsLoginPage() {
-        Intent intent = new Intent(this, LoginPage.class);
-        intent.putExtra("IMAGE_URI", imageUri.toString());
-        startActivity(intent);
-    }
     private void setImageViewVisibility(int visibility, ImageView... imageViews) {
         for (ImageView imageView : imageViews) {
             imageView.setVisibility(visibility);
@@ -261,11 +290,6 @@ public class SignUpPage extends AppCompatActivity {
         }
     }
 
-    private void openPatientLoginPage() {
-        // Handle the navigation for patients or other roles here
-        Intent intent = new Intent(this, LoginPage.class);
-        startActivity(intent);
-    }
 
     // Method to set the visibility of multiple buttons
     private void setButtonVisibility(int visibility, View... buttons) {
