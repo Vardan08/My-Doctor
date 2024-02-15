@@ -7,14 +7,24 @@ import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class LoginPage extends AppCompatActivity {
-    Button doctorsLogin, logInPatients;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+public class LoginPage extends AppCompatActivity {
+    Button login, logInPatients;
+    EditText passText;
+    TextInputEditText emailText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,15 +58,58 @@ public class LoginPage extends AppCompatActivity {
             }
         });
 
-        doctorsLogin = findViewById(R.id.loginButton);
-
-        doctorsLogin.setOnClickListener(new View.OnClickListener() {
+        login = findViewById(R.id.loginButton);
+        emailText = findViewById(R.id.editTextTextEmailAddress);
+        passText = findViewById(R.id.Password);
+        login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openDoctorsHomePage();
+                String email = emailText.getText().toString().trim();
+                String password = passText.getText().toString().trim();
+                signIn(email, password);
             }
         });
     }
+    private void signIn(String email, String password) {
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    Log.d("MyTask","" +task);
+                    if (task.isSuccessful()) {
+                        // Sign in success
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        checkUserRole(user);
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Toast.makeText(LoginPage.this, "Authentication failed.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+    private void checkUserRole(FirebaseUser user) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference docRef = db.collection("users").document(user.getUid());
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    String role = document.getString("role"); // Assuming you have a 'role' field
+                    if ("doctor".equals(role)) {
+                        openDoctorsHomePage();
+                    } else if ("patient".equals(role)) {
+                        openPatientHomePage();
+                    }
+                } else {
+                    Toast.makeText(LoginPage.this, "No such user",
+                            Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(LoginPage.this, "Error checking user role",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     private void setClickableSpan(TextView textView, String clickableText, ClickableSpan clickableSpan) {
         String textViewText = textView.getText().toString();
