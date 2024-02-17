@@ -22,7 +22,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginPage extends AppCompatActivity {
-    Button login, logInPatients;
+    Button login;
     EditText passText;
     TextInputEditText emailText;
     @Override
@@ -33,14 +33,9 @@ public class LoginPage extends AppCompatActivity {
 
         TextView createAccountTextView = findViewById(R.id.create_account);
         TextView forgotPasswordTextView = findViewById(R.id.forgot_password);
-        logInPatients = findViewById(R.id.logInPatients);
 
-        logInPatients.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openPatientHomePage();
-            }
-        });
+
+
 
         setClickableSpan(createAccountTextView, "Create Account", new ClickableSpan() {
             @Override
@@ -78,7 +73,8 @@ public class LoginPage extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         // Sign in success
                         FirebaseUser user = mAuth.getCurrentUser();
-                        checkUserRole(user);
+                        Log.d("myuservalue","" + user);
+                        checkUserRoll(user);
                     } else {
                         // If sign in fails, display a message to the user.
                         Toast.makeText(LoginPage.this, "Authentication failed.",
@@ -86,17 +82,18 @@ public class LoginPage extends AppCompatActivity {
                     }
                 });
     }
-    private void checkUserRole(FirebaseUser user) {
+    private void checkUserRoll(FirebaseUser user) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference docRef = db.collection("users").document(user.getUid());
         docRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
-                    String role = document.getString("role"); // Assuming you have a 'role' field
-                    if ("doctor".equals(role)) {
+                    Log.d("myUserDocument","" + document);
+                    String roll = document.getString("roll"); // Assuming you have a 'roll' field
+                    if ("Doctor".equals(roll)) {
                         openDoctorsHomePage();
-                    } else if ("patient".equals(role)) {
+                    } else if ("Patient".equals(roll)) {
                         openPatientHomePage();
                     }
                 } else {
@@ -104,7 +101,7 @@ public class LoginPage extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(LoginPage.this, "Error checking user role",
+                Toast.makeText(LoginPage.this, "Error checking user roll",
                         Toast.LENGTH_SHORT).show();
             }
         });

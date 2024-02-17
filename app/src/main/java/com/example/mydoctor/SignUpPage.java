@@ -29,6 +29,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -166,26 +168,54 @@ public class SignUpPage extends AppCompatActivity {
                 }
 
 
-                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole);
+                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                    mAuth.createUserWithEmailAndPassword(email,password).addOnCompleteListener(SignUpPage.this,task -> {
+                        if (task.isSuccessful()) {
+                            // Registration success
+                            FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                            if (firebaseUser != null) {
+                                // Creating a user object to store in Firestore
+                                User newUser = new User(fullName,email,mobileNumber,location,password,selectedRole);
+                                // Add additional user details to Firestore
+                                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                                db.collection("users").document(firebaseUser.getUid())
+                                        .set(newUser)
+                                        .addOnSuccessListener(aVoid -> {
+                                            Log.d(TAG, "Document successfully added!");
 
-                    db = FirebaseFirestore.getInstance();
-                    db.collection("users/").document(fullName)
-                            .set(newUser)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    Log.d(TAG, "Document successfully added!");
-                                    // Navigate to the next appropriate page or show a success message
-                                    openLoginPage();
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Log.w(TAG, "Error adding document", e);
-                                    // Handle the error, such as showing a failure message
-                                }
-                            });
+                                            // Clear all EditText fields here
+                                            fullNameEditText.setText("");
+                                            emailEditText.setText("");
+                                            mobileNumberEditText.setText("");
+                                            locationEditText.setText("");
+                                            passwordEditText.setText("");
+                                            confirmPasswordEditText.setText("");
+
+                                            // Optionally, reset the spinner
+                                            spinner.setSelection(0); // Assuming the first position is the default
+
+                                            // Clear images or reset to default if applicable
+                                            clearImages(smallPhotoImageView, extraImageView1, extraImageView2);
+
+                                            // Navigate to login page or show success message
+                                            openLoginPage();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.w(TAG, "Error adding document", e);
+                                            // Handle the error
+                                        });
+                            }
+                        }else {
+                            // If sign up fails, display a message to the user.
+                            if (task.getException() != null) {
+                                Toast.makeText(SignUpPage.this, "Authentication failed: " + task.getException().getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(SignUpPage.this, "Authentication failed.",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
             }
         });
 
@@ -232,6 +262,12 @@ public class SignUpPage extends AppCompatActivity {
                 // Do nothing here
             }
         });
+    }
+    private void clearImages(ImageView... images) {
+        for (ImageView image : images) {
+            image.setImageDrawable(null); // Removes the image
+            // Use setImageResource(R.drawable.default_image) if you want to reset to a default image
+        }
     }
 
     private boolean isValidEmail(String email) {
