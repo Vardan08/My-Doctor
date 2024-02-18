@@ -1,6 +1,8 @@
 package com.example.mydoctor;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import androidx.activity.OnBackPressedCallback;
@@ -17,6 +19,10 @@ public class DoctorsHomePage extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        User user = getIntent().getParcelableExtra("USER");
+
+
+
         setContentView(R.layout.activity_doctors_home_page);
 
         todayPatientsButton = findViewById(R.id.todayPatients);
@@ -24,20 +30,20 @@ public class DoctorsHomePage extends AppCompatActivity {
         profileButton = findViewById(R.id.profile);
 
         TodayPatients todayPatients = new TodayPatients();
-        setNewFragment(todayPatients);
+        setNewFragment(todayPatients,user);
 
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Profile profile = new Profile();
-                setNewFragment(profile);
+                setNewFragment(profile,user);
             }
         });
 
         todayPatientsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setNewFragment(todayPatients);
+                setNewFragment(todayPatients,user);
             }
         });
 
@@ -45,7 +51,7 @@ public class DoctorsHomePage extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 DoctorMessages messages = new DoctorMessages();
-                setNewFragment(messages);
+                setNewFragment(messages,user);
             }
         });
 
@@ -59,12 +65,17 @@ public class DoctorsHomePage extends AppCompatActivity {
         });
     }
 
-    private void setNewFragment(Fragment fragment) {
+    private void setNewFragment(Fragment fragment, User user) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER", user);  // Assuming User implements Parcelable
+        fragment.setArguments(bundle);
+
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.content_of_three_buttons, fragment);
-        ft.addToBackStack(null);  // Enable back navigation between fragments
+        ft.addToBackStack(null);
         ft.commit();
     }
+
 
     private void exitApplicationIfInTodayPatientsFragment() {
         // Check if the current fragment is TodayPatients

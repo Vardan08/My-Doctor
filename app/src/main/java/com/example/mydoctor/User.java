@@ -1,6 +1,9 @@
 package com.example.mydoctor;
 
-public class User {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class User implements Parcelable {
     private String fullName;
     private String email;
     private String mobileNumber;
@@ -19,6 +22,42 @@ public class User {
         this.password = password;
         this.roll = roll;
     }
+
+    protected User(Parcel in) {
+        fullName = in.readString();
+        email = in.readString();
+        mobileNumber = in.readString();
+        location = in.readString();
+        password = in.readString();
+        roll = in.readString();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(fullName);
+        dest.writeString(email);
+        dest.writeString(mobileNumber);
+        dest.writeString(location);
+        dest.writeString(password);
+        dest.writeString(roll);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<User> CREATOR = new Creator<User>() {
+        @Override
+        public User createFromParcel(Parcel in) {
+            return new User(in);
+        }
+
+        @Override
+        public User[] newArray(int size) {
+            return new User[size];
+        }
+    };
 
     public String getFullName() {
         return fullName;
