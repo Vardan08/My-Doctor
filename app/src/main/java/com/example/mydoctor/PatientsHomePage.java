@@ -17,34 +17,35 @@ public class PatientsHomePage extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_patients_home_page);
+        User user = getIntent().getParcelableExtra("USER");
         todayPatientsButton = findViewById(R.id.todayPatients);
         messagesButton = findViewById(R.id.messages);
         profileButton = findViewById(R.id.profile);
         questionnaireButton = findViewById(R.id.questionnaireButton);
 
         AddVisit addVisit = new AddVisit();
-        setNewFragment(addVisit);
+        setNewFragment(addVisit,user);
 
 
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 PatientsProfile profile = new PatientsProfile();
-                setNewFragment(profile);
+                setNewFragment(profile,user);
             }
         });
 
         todayPatientsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setNewFragment(addVisit);
+                setNewFragment(addVisit,user);
             }
         });
         messagesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 PatientMessages messages = new PatientMessages();
-                setNewFragment(messages);
+                setNewFragment(messages,user);
             }
         });
 
@@ -52,7 +53,7 @@ public class PatientsHomePage extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 ChildrenPatientRegistration childrenPatientRegistration = new ChildrenPatientRegistration();
-                setNewFragment(childrenPatientRegistration);
+                setNewFragment(childrenPatientRegistration,user);
             }
         });
 
@@ -90,9 +91,15 @@ public class PatientsHomePage extends AppCompatActivity {
     private Fragment getCurrentFragment() {
         return getSupportFragmentManager().findFragmentById(R.id.content_of_three_buttons);
     }
-    private void setNewFragment(Fragment fragment){
+    private void setNewFragment(Fragment fragment, User user) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER", user);  // Assuming User implements Parcelable
+        fragment.setArguments(bundle);
+
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.content_of_three_buttons, fragment);
+        ft.addToBackStack(null);
         ft.commit();
     }
+
 }

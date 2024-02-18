@@ -20,11 +20,13 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
 
 public class LoginPage extends AppCompatActivity {
     Button login;
     EditText passText;
     TextInputEditText emailText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,8 +35,6 @@ public class LoginPage extends AppCompatActivity {
 
         TextView createAccountTextView = findViewById(R.id.create_account);
         TextView forgotPasswordTextView = findViewById(R.id.forgot_password);
-
-
 
 
         setClickableSpan(createAccountTextView, "Create Account", new ClickableSpan() {
@@ -61,19 +61,24 @@ public class LoginPage extends AppCompatActivity {
             public void onClick(View v) {
                 String email = emailText.getText().toString().trim();
                 String password = passText.getText().toString().trim();
-                signIn(email, password);
+                if(email.isEmpty() && password.isEmpty()){
+                    Toast.makeText(LoginPage.this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
+                }else {
+                    signIn(email, password);
+                }
             }
         });
     }
+
     private void signIn(String email, String password) {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
-                    Log.d("MyTask","" +task);
+                    Log.d("MyTask", "" + task);
                     if (task.isSuccessful()) {
                         // Sign in success
                         FirebaseUser user = mAuth.getCurrentUser();
-                        Log.d("myuservalue","" + user);
+                        Log.d("myuservalue", "" + user);
                         checkUserRoll(user);
                     } else {
                         // If sign in fails, display a message to the user.
@@ -82,6 +87,7 @@ public class LoginPage extends AppCompatActivity {
                     }
                 });
     }
+
     private void checkUserRoll(FirebaseUser user) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference docRef = db.collection("users").document(user.getUid());
@@ -89,7 +95,7 @@ public class LoginPage extends AppCompatActivity {
             if (task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
-                    Log.d("myUserDocument","" + document);
+                    Log.d("myUserDocument", "" + document);
                     String roll = document.getString("roll"); // Assuming you have a 'roll' field
                     if ("Doctor".equals(roll)) {
                         openDoctorsHomePage();
@@ -125,23 +131,65 @@ public class LoginPage extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void openDoctorsHomePage(){
+    private void openDoctorsHomePage() {
         try {
-            Intent intent = new Intent(LoginPage.this, DoctorsHomePage.class);
-            startActivity(intent);
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+            FirebaseFirestore.getInstance().collection("users")
+                    .document(user.getUid()).addSnapshotListener(
+                            (snapshot, e) -> {
+                                if (e != null) {
+                                    Toast.makeText(this, "cant fetch metadata", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                assert snapshot != null:"data snapshot is null when it is not expected";
+
+                                Intent intent = new Intent(LoginPage.this, DoctorsHomePage.class);
+                                User userMetadata = snapshot.toObject(User.class);
+
+                                intent.putExtra("USER",userMetadata);
+
+                                startActivity(intent);
+
+
+                            }
+                    );
         } catch (Exception e) {
             Toast.makeText(this, "Error opening LoginPage: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    private void openForgotPassword(){
+    private void openPatientHomePage() {
+        try {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+            FirebaseFirestore.getInstance().collection("users")
+                    .document(user.getUid()).addSnapshotListener(
+                            (snapshot, e) -> {
+                                if (e != null) {
+                                    Toast.makeText(this, "cant fetch metadata", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                assert snapshot != null:"data snapshot is null when it is not expected";
+
+                                Intent intent = new Intent(LoginPage.this, PatientsHomePage.class);
+                                User userMetadata = snapshot.toObject(User.class);
+
+                                intent.putExtra("USER",userMetadata);
+
+                                startActivity(intent);
+
+
+                            }
+                    );
+        } catch (Exception e) {
+            Toast.makeText(this, "Error opening LoginPage: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+    private void openForgotPassword() {
         Intent intent = new Intent(LoginPage.this, ForgotPassword.class);
         startActivity(intent);
     }
 
 
-    private void openPatientHomePage(){
-        Intent intent = new Intent(this, PatientsHomePage.class);
-        startActivity(intent);
-    }
 }
