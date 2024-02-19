@@ -61,7 +61,7 @@ public class LoginPage extends AppCompatActivity {
             public void onClick(View v) {
                 String email = emailText.getText().toString().trim();
                 String password = passText.getText().toString().trim();
-                if(email.isEmpty() && password.isEmpty()){
+                if(email.isEmpty() || password.isEmpty()){
                     Toast.makeText(LoginPage.this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
                 }else {
                     signIn(email, password);
