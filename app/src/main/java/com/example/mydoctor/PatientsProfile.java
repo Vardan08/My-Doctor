@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
+import com.google.firebase.auth.FirebaseAuth;
 public class PatientsProfile extends Fragment {
     private User user;
     TextView fullName,email,phoneNumber,nameBelowPhoto;
@@ -55,7 +55,10 @@ public class PatientsProfile extends Fragment {
     }
 
     private void openLoginActivity() {
+        FirebaseAuth.getInstance().signOut();
+
         Intent intent = new Intent(getActivity(), LoginPage.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Очистите back stack
         startActivity(intent);
     }
 }

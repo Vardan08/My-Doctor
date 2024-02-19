@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 public class Profile extends Fragment {
     TextView fullName, email, phoneNumber,nameBelowPhoto;
     Button logOutButton;
@@ -55,7 +57,10 @@ public class Profile extends Fragment {
 
 
     private void openLoginActivity() {
+        FirebaseAuth.getInstance().signOut();
+
         Intent intent = new Intent(getActivity(), LoginPage.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Очистите back stack
         startActivity(intent);
     }
 }
