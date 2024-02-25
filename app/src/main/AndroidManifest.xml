@@ -14,19 +14,19 @@
         android:theme="@style/Theme.PersonalHealthCard"
         tools:targetApi="31">
         <activity
-            android:name=".PatientsHomePage"
+            android:name=".patients_classes.PatientsHomePage"
             android:exported="false" />
         <activity
-            android:name=".PasswordVerification"
+            android:name=".forgot_password_classes.PasswordVerification"
             android:exported="false" />
         <activity
-            android:name=".CreateNewPassword"
+            android:name=".forgot_password_classes.CreateNewPassword"
             android:exported="false" />
         <activity
-            android:name=".ForgotPassword"
+            android:name=".forgot_password_classes.ForgotPassword"
             android:exported="false" />
         <activity
-            android:name=".DoctorsHomePage"
+            android:name=".doctors_classes.DoctorsHomePage"
             android:exported="false" />
         <activity
             android:name=".SignUpPage"

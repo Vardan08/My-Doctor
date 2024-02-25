@@ -1,4 +1,7 @@
-package com.example.mydoctor;
+package com.example.mydoctor.doctors_classes;
+
+import android.os.Bundle;
+import android.view.View;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -6,31 +9,36 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.os.Bundle;
-import android.view.View;
-
+import com.example.mydoctor.R;
+import com.example.mydoctor.User;
+import com.example.mydoctor.doctors_classes.fragments.DoctorMessages;
+import com.example.mydoctor.doctors_classes.fragments.Profile;
+import com.example.mydoctor.doctors_classes.fragments.TodayPatients;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class PatientsHomePage extends AppCompatActivity {
-    private FloatingActionButton todayPatientsButton, messagesButton, profileButton, questionnaireButton;
+public class DoctorsHomePage extends AppCompatActivity {
+    private FloatingActionButton todayPatientsButton, messagesButton, profileButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_patients_home_page);
         User user = getIntent().getParcelableExtra("USER");
+
+
+
+        setContentView(R.layout.activity_doctors_home_page);
+
         todayPatientsButton = findViewById(R.id.todayPatients);
         messagesButton = findViewById(R.id.messages);
         profileButton = findViewById(R.id.profile);
-        questionnaireButton = findViewById(R.id.questionnaireButton);
 
-        AddVisit addVisit = new AddVisit();
-        setNewFragment(addVisit,user);
-
+        TodayPatients todayPatients = new TodayPatients();
+        setNewFragment(todayPatients,user);
 
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PatientsProfile profile = new PatientsProfile();
+                Profile profile = new Profile();
                 setNewFragment(profile,user);
             }
         });
@@ -38,25 +46,19 @@ public class PatientsHomePage extends AppCompatActivity {
         todayPatientsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setNewFragment(addVisit,user);
+                setNewFragment(todayPatients,user);
             }
         });
+
         messagesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PatientMessages messages = new PatientMessages();
+                DoctorMessages messages = new DoctorMessages();
                 setNewFragment(messages,user);
             }
         });
 
-        questionnaireButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ChildrenPatientRegistration childrenPatientRegistration = new ChildrenPatientRegistration();
-                setNewFragment(childrenPatientRegistration,user);
-            }
-        });
-
+        // Add onBackPressedDispatcher callback
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -66,11 +68,23 @@ public class PatientsHomePage extends AppCompatActivity {
         });
     }
 
+    private void setNewFragment(Fragment fragment, User user) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER", user);  // Assuming User implements Parcelable
+        fragment.setArguments(bundle);
+
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.replace(R.id.content_of_three_buttons, fragment);
+        ft.addToBackStack(null);
+        ft.commit();
+    }
+
+
     private void exitApplicationIfInTodayPatientsFragment() {
         // Check if the current fragment is TodayPatients
         Fragment currentFragment = getCurrentFragment();
 
-        if (currentFragment != null && currentFragment instanceof AddVisit) {
+        if (currentFragment != null && currentFragment instanceof TodayPatients) {
             // If yes, finish the activity and exit the application
             finishAffinity();
         } else {
@@ -91,15 +105,4 @@ public class PatientsHomePage extends AppCompatActivity {
     private Fragment getCurrentFragment() {
         return getSupportFragmentManager().findFragmentById(R.id.content_of_three_buttons);
     }
-    private void setNewFragment(Fragment fragment, User user) {
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("USER", user);  // Assuming User implements Parcelable
-        fragment.setArguments(bundle);
-
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.content_of_three_buttons, fragment);
-        ft.addToBackStack(null);
-        ft.commit();
-    }
-
 }

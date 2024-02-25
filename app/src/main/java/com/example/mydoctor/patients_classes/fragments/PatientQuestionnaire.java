@@ -1,4 +1,4 @@
-package com.example.mydoctor;
+package com.example.mydoctor.patients_classes.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
+
+import com.example.mydoctor.R;
 
 public class PatientQuestionnaire extends Fragment {
 

@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -158,54 +159,68 @@ public class SignUpPage extends AppCompatActivity {
                 }
 
 
-                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
-                    mAuth.createUserWithEmailAndPassword(email,password).addOnCompleteListener(SignUpPage.this,task -> {
-                        if (task.isSuccessful()) {
-                            // Registration success
-                            FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                            if (firebaseUser != null) {
-                                // Creating a user object to store in Firestore
-                                User newUser = new User(fullName,email,mobileNumber,location,password,selectedRole);
-                                // Add additional user details to Firestore
-                                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                                db.collection("users").document(firebaseUser.getUid())
-                                        .set(newUser)
-                                        .addOnSuccessListener(aVoid -> {
-                                            Log.d(TAG, "Document successfully added!");
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                // Check if the phone number is already in use
+                db.collection("users").whereEqualTo("mobileNumber", mobileNumber).get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        // Phone number is already in use
+                        Toast.makeText(SignUpPage.this, "This phone number is already in use.", Toast.LENGTH_SHORT).show();
+                    } else if (task.isSuccessful()) {
+                        // Phone number is not in use, proceed with creating the user
+                        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                        mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(SignUpPage.this, createUserTask -> {
+                            if (createUserTask.isSuccessful()) {
+                                // Registration success
+                                FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                                if (firebaseUser != null) {
+                                    // Creating a user object to store in Firestore
+                                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole);
+                                    // Add additional user details to Firestore
+                                    db.collection("users").document(firebaseUser.getUid())
+                                            .set(newUser)
+                                            .addOnSuccessListener(aVoid -> {
+                                                Log.d(TAG, "Document successfully added!");
 
-                                            // Clear all EditText fields here
-                                            fullNameEditText.setText("");
-                                            emailEditText.setText("");
-                                            mobileNumberEditText.setText("");
-                                            locationEditText.setText("");
-                                            passwordEditText.setText("");
-                                            confirmPasswordEditText.setText("");
+                                                // Clear all EditText fields here
+                                                fullNameEditText.setText("");
+                                                emailEditText.setText("");
+                                                mobileNumberEditText.setText("");
+                                                locationEditText.setText("");
+                                                passwordEditText.setText("");
+                                                confirmPasswordEditText.setText("");
 
-                                            // Optionally, reset the spinner
-                                            spinner.setSelection(0); // Assuming the first position is the default
+                                                // Optionally, reset the spinner
+                                                spinner.setSelection(0); // Assuming the first position is the default
 
-                                            // Clear images or reset to default if applicable
-                                            clearImages(smallPhotoImageView, extraImageView1, extraImageView2);
+                                                // Clear images or reset to default if applicable
+                                                clearImages(smallPhotoImageView, extraImageView1, extraImageView2);
 
-                                            // Navigate to login page or show success message
-                                            openLoginPage();
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Log.w(TAG, "Error adding document", e);
-                                            // Handle the error
-                                        });
-                            }
-                        }else {
-                            // If sign up fails, display a message to the user.
-                            if (task.getException() != null) {
-                                Toast.makeText(SignUpPage.this, "Authentication failed: " + task.getException().getMessage(),
-                                        Toast.LENGTH_SHORT).show();
+                                                // Navigate to login page or show success message
+                                                openLoginPage();
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.w(TAG, "Error adding document", e);
+                                                // Handle the error
+                                            });
+                                }
                             } else {
-                                Toast.makeText(SignUpPage.this, "Authentication failed.",
-                                        Toast.LENGTH_SHORT).show();
+                                // If sign up fails, display a message to the user.
+                                if (createUserTask.getException() instanceof FirebaseAuthUserCollisionException) {
+                                    Toast.makeText(SignUpPage.this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                                } else if (createUserTask.getException() != null) {
+                                    Toast.makeText(SignUpPage.this, "Authentication failed: " + createUserTask.getException().getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(SignUpPage.this, "Authentication failed.",
+                                            Toast.LENGTH_SHORT).show();
+                                }
                             }
-                        }
-                    });
+                        });
+                    } else {
+                        // Handle error checking phone number
+                        Toast.makeText(SignUpPage.this, "Failed to check if phone number is in use.", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
 

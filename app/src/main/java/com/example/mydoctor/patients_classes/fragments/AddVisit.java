@@ -1,4 +1,4 @@
-package com.example.mydoctor;
+package com.example.mydoctor.patients_classes.fragments;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -11,6 +11,8 @@ import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import androidx.fragment.app.Fragment;
+
+import com.example.mydoctor.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

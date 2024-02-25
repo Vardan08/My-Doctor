@@ -1,4 +1,4 @@
-package com.example.mydoctor;
+package com.example.mydoctor.forgot_password_classes;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.example.mydoctor.R;
 
 public class ForgotPassword extends AppCompatActivity {
     Button buttonSendCode;

@@ -1,4 +1,4 @@
-package com.example.mydoctor;
+package com.example.mydoctor.doctors_classes.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +11,9 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
+import com.example.mydoctor.LoginPage;
+import com.example.mydoctor.R;
+import com.example.mydoctor.User;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class Profile extends Fragment {

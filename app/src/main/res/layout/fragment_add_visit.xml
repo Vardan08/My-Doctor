@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AddVisit">
+    tools:context=".patients_classes.fragments.AddVisit">
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -33,7 +33,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".AddVisit">
+        tools:context=".patients_classes.fragments.AddVisit">
 
         <Button
             android:id="@+id/addEventButton"

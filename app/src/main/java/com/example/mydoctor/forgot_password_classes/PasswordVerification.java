@@ -1,4 +1,4 @@
-package com.example.mydoctor;
+package com.example.mydoctor.forgot_password_classes;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +8,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.mydoctor.R;
 
 public class PasswordVerification extends AppCompatActivity {
     Button buttonVerifyCode;

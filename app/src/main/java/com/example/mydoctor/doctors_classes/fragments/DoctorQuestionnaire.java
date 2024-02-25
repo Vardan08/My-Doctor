@@ -1,4 +1,4 @@
-package com.example.mydoctor;
+package com.example.mydoctor.doctors_classes.fragments;
 
 import android.os.Bundle;
 
@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+
+import com.example.mydoctor.R;
 
 import java.util.ArrayList;
 

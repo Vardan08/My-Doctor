@@ -14,13 +14,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.mydoctor.doctors_classes.DoctorsHomePage;
+import com.example.mydoctor.forgot_password_classes.ForgotPassword;
+import com.example.mydoctor.patients_classes.PatientsHomePage;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
 
 public class LoginPage extends AppCompatActivity {
     Button login;

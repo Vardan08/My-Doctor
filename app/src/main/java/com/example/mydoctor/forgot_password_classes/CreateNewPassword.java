@@ -1,4 +1,4 @@
-package com.example.mydoctor;
+package com.example.mydoctor.forgot_password_classes;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+
+import com.example.mydoctor.LoginPage;
+import com.example.mydoctor.R;
 
 public class CreateNewPassword extends AppCompatActivity {
     Button buttonSavePassword;
@@ -22,7 +25,7 @@ public class CreateNewPassword extends AppCompatActivity {
         });
     }
     private void openLoginPage(){
-        Intent intent = new Intent(this,LoginPage.class);
+        Intent intent = new Intent(this, LoginPage.class);
         startActivity(intent);
     }
 }
