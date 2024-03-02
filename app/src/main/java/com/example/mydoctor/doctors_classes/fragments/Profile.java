@@ -15,9 +15,11 @@ import com.example.mydoctor.LoginPage;
 import com.example.mydoctor.R;
 import com.example.mydoctor.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Profile extends Fragment {
-    TextView fullName, email, phoneNumber,nameBelowPhoto;
+    TextView fullName, email, phoneNumber,nameBelowPhoto,deleteAccountTextView;
     Button logOutButton;
     private User user;
     @Override
@@ -36,6 +38,7 @@ public class Profile extends Fragment {
         email = view.findViewById(R.id.textEmail);
         phoneNumber = view.findViewById(R.id.textPhone);
         logOutButton = view.findViewById(R.id.logOut);
+        deleteAccountTextView = view.findViewById(R.id.deleteAccount);
 
         // Assuming your User class has getFullName(), getEmail(), and getPhoneNumber() methods
         if(user != null) {
@@ -48,6 +51,13 @@ public class Profile extends Fragment {
             Log.d("ProfileFragment", "User data is not available");
         }
 
+        deleteAccountTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteAccount();
+            }
+        });
+
         logOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -58,7 +68,29 @@ public class Profile extends Fragment {
         return view;
     }
 
-
+    private void deleteAccount() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if(user != null){
+            String uid = user.getUid();
+            FirebaseFirestore.getInstance().collection("users").document(uid)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("Firestore", "User document deleted successfully.");
+                        user.delete().addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Log.d("Delete Account", "User account deleted.");
+                                FirebaseAuth.getInstance().signOut();
+                                openLoginActivity();
+                            } else {
+                                Log.w("Delete Account", "Failed to delete user account.", task.getException());
+                            }
+                        });
+                    })
+                    .addOnFailureListener(e -> Log.w("Firestore", "Error deleting user document", e));
+        }else{
+            Log.d("Delete Account", "No user to delete.");
+        }
+    }
     private void openLoginActivity() {
         FirebaseAuth.getInstance().signOut();
 
