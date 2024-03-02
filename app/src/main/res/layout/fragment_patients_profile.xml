@@ -147,6 +147,15 @@
                 android:layout_below="@id/textDoctorName"
                 android:layout_marginTop="16dp"
                 android:text="Log out" />
+            <TextView
+                android:id="@+id/deleteAccount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/logOut"
+                android:layout_marginTop="16dp"
+                android:text="Delete Account"
+                android:textColor="@color/design_default_color_error"
+               />
 
         </RelativeLayout>
     </androidx.cardview.widget.CardView>
