@@ -12,25 +12,69 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.mydoctor.R;
+import com.example.mydoctor.User;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ChildrenPatientRegistration extends Fragment {
 
     private LinearLayout container;
+    private User user;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            user = getArguments().getParcelable("USER");
+        }
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_children_patient_registration, container, false);
         this.container = view.findViewById(R.id.container);
         Button addChildButton = view.findViewById(R.id.addChild);
         addChildButton.setOnClickListener(this::showAddChildDialog);
+
+        if (currentUser != null) {
+            fetchChildrenAndDisplay();
+        } else {
+            Toast.makeText(getActivity(), "User not signed in", Toast.LENGTH_SHORT).show();
+        }
+
         return view;
+    }
+
+    private void fetchChildrenAndDisplay() {
+        if (currentUser == null) return;
+        db.collection("users").document(currentUser.getUid()).collection("children")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String fullName = document.getString("fullName");
+                            if (fullName != null) {
+                                addChildCard(fullName);
+                            }
+                        }
+                    } else {
+                        Toast.makeText(getActivity(), "Error getting documents: " + task.getException(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     public void showAddChildDialog(View view) {
@@ -46,10 +90,8 @@ public class ChildrenPatientRegistration extends Fragment {
         editTextDOB.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
             DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(),
-                    (view1, year, month, dayOfMonth) -> {
-                        String formattedDate = dayOfMonth + "/" + (month + 1) + "/" + year;
-                        editTextDOB.setText(formattedDate);
-                    }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                    (view1, year, month, dayOfMonth) -> editTextDOB.setText(String.format("%d/%d/%d", dayOfMonth, month + 1, year)),
+                    calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
             datePickerDialog.show();
         });
 
@@ -68,13 +110,29 @@ public class ChildrenPatientRegistration extends Fragment {
                 if (fullName.isEmpty() || location.isEmpty() || dob.isEmpty() || birthCertDetails.isEmpty()) {
                     Toast.makeText(getActivity(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
                 } else {
-                    addChildCard(fullName);
+                    addChildToFirestore(fullName, location, dob, birthCertDetails);
                     dialog.dismiss();
                 }
             });
         });
 
         dialog.show();
+    }
+
+    private void addChildToFirestore(String fullName, String location, String dob, String birthCertDetails) {
+        if (currentUser == null) return;
+        Map<String, Object> child = new HashMap<>();
+        child.put("fullName", fullName);
+        child.put("location", location);
+        child.put("dob", dob);
+        child.put("birthCertDetails", birthCertDetails);
+
+        db.collection("users").document(currentUser.getUid()).collection("children").add(child)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(getActivity(), "Child added successfully!", Toast.LENGTH_SHORT).show();
+                    addChildCard(fullName);
+                })
+                .addOnFailureListener(e -> Toast.makeText(getActivity(), "Error adding child", Toast.LENGTH_SHORT).show());
     }
 
     private void addChildCard(String fullName) {

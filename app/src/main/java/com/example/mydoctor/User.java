@@ -11,7 +11,6 @@ public class User implements Parcelable {
     private String password;
     private String roll;
 
-
     public User() {}
 
     public User(String fullName, String email, String mobileNumber, String location, String password, String roll) {
