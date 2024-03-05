@@ -2,6 +2,7 @@ package com.example.mydoctor.patients_classes.fragments;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -61,9 +62,17 @@ public class ChildrenPatientRegistration extends Fragment {
 
     private void fetchChildrenAndDisplay() {
         if (currentUser == null) return;
+
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Loading children...");
+        progressDialog.show();
+
         db.collection("users").document(currentUser.getUid()).collection("children")
                 .get()
                 .addOnCompleteListener(task -> {
+                    progressDialog.dismiss();
+
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             String fullName = document.getString("fullName");
@@ -76,6 +85,7 @@ public class ChildrenPatientRegistration extends Fragment {
                     }
                 });
     }
+
 
     public void showAddChildDialog(View view) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -121,6 +131,12 @@ public class ChildrenPatientRegistration extends Fragment {
 
     private void addChildToFirestore(String fullName, String location, String dob, String birthCertDetails) {
         if (currentUser == null) return;
+
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Adding child...");
+        progressDialog.show();
+
         Map<String, Object> child = new HashMap<>();
         child.put("fullName", fullName);
         child.put("location", location);
@@ -131,9 +147,14 @@ public class ChildrenPatientRegistration extends Fragment {
                 .addOnSuccessListener(documentReference -> {
                     Toast.makeText(getActivity(), "Child added successfully!", Toast.LENGTH_SHORT).show();
                     addChildCard(fullName);
+                    progressDialog.dismiss();
                 })
-                .addOnFailureListener(e -> Toast.makeText(getActivity(), "Error adding child", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getActivity(), "Error adding child", Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
+                });
     }
+
 
     private void addChildCard(String fullName) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());

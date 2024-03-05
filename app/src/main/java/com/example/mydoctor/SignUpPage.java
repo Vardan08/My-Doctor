@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.mydoctor.forgot_password_classes.ForgotPassword;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
@@ -42,6 +44,7 @@ public class SignUpPage extends AppCompatActivity {
     private EditText locationEditText;
     private EditText passwordEditText;
     private EditText confirmPasswordEditText;
+    ProgressDialog dialog;
     Button signUpButton, attachPhotoBtn, extraButton1, extraButton2;
     Spinner spinner;
     ArrayList<String> spinnerArrList;
@@ -72,6 +75,9 @@ public class SignUpPage extends AppCompatActivity {
         locationEditText = findViewById(R.id.location);
         passwordEditText = findViewById(R.id.password);
         confirmPasswordEditText = findViewById(R.id.confirmPassword);
+        dialog = new ProgressDialog(SignUpPage.this);
+        dialog.setCancelable(false);
+        dialog.setMessage("Loading.....");
 
         if (savedInstanceState != null) {
             fullNameEditText.setText(savedInstanceState.getString("fullName"));
@@ -157,11 +163,11 @@ public class SignUpPage extends AppCompatActivity {
                         && extraImageView1.getDrawable() != null && extraImageView2.getDrawable() != null) {
 
                 }
-
-
+                dialog.show();
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 // Check if the phone number is already in use
                 db.collection("users").whereEqualTo("mobileNumber", mobileNumber).get().addOnCompleteListener(task -> {
+
                     if (task.isSuccessful() && !task.getResult().isEmpty()) {
                         // Phone number is already in use
                         Toast.makeText(SignUpPage.this, "This phone number is already in use.", Toast.LENGTH_SHORT).show();
@@ -181,6 +187,7 @@ public class SignUpPage extends AppCompatActivity {
                                             .addOnSuccessListener(aVoid -> {
                                                 Log.d(TAG, "Document successfully added!");
 
+
                                                 // Clear all EditText fields here
                                                 fullNameEditText.setText("");
                                                 emailEditText.setText("");
@@ -194,6 +201,7 @@ public class SignUpPage extends AppCompatActivity {
 
                                                 // Clear images or reset to default if applicable
                                                 clearImages(smallPhotoImageView, extraImageView1, extraImageView2);
+                                                dialog.dismiss();
 
                                                 // Navigate to login page or show success message
                                                 openLoginPage();
@@ -207,18 +215,22 @@ public class SignUpPage extends AppCompatActivity {
                                 // If sign up fails, display a message to the user.
                                 if (createUserTask.getException() instanceof FirebaseAuthUserCollisionException) {
                                     Toast.makeText(SignUpPage.this, "This email is already in use.", Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
                                 } else if (createUserTask.getException() != null) {
                                     Toast.makeText(SignUpPage.this, "Authentication failed: " + createUserTask.getException().getMessage(),
                                             Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
                                 } else {
                                     Toast.makeText(SignUpPage.this, "Authentication failed.",
                                             Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
                                 }
                             }
                         });
                     } else {
                         // Handle error checking phone number
                         Toast.makeText(SignUpPage.this, "Failed to check if phone number is in use.", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
                     }
                 });
             }

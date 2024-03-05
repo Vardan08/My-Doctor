@@ -1,5 +1,6 @@
 package com.example.mydoctor.doctors_classes.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
@@ -21,6 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class Profile extends Fragment {
     TextView fullName, email, phoneNumber,nameBelowPhoto,deleteAccountTextView;
     Button logOutButton;
+    ProgressDialog dialog;
     private User user;
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,6 +72,10 @@ public class Profile extends Fragment {
     }
 
     private void deleteAccount() {
+        dialog = new ProgressDialog(getContext());
+        dialog.setCancelable(false);
+        dialog.setMessage("Loading.....");
+        dialog.show();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user != null){
             String uid = user.getUid();
@@ -80,15 +87,24 @@ public class Profile extends Fragment {
                             if (task.isSuccessful()) {
                                 Log.d("Delete Account", "User account deleted.");
                                 FirebaseAuth.getInstance().signOut();
+                                if(dialog != null && dialog.isShowing()) {
+                                    dialog.dismiss();
+                                }
                                 openLoginActivity();
                             } else {
                                 Log.w("Delete Account", "Failed to delete user account.", task.getException());
+                                if(dialog != null && dialog.isShowing()) {
+                                    dialog.dismiss();
+                                }
                             }
                         });
                     })
                     .addOnFailureListener(e -> Log.w("Firestore", "Error deleting user document", e));
         }else{
             Log.d("Delete Account", "No user to delete.");
+            if(dialog != null && dialog.isShowing()) {
+                dialog.dismiss();
+            }
         }
     }
     private void openLoginActivity() {
