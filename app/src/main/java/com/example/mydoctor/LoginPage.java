@@ -2,6 +2,7 @@ package com.example.mydoctor;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -73,19 +74,23 @@ public class LoginPage extends AppCompatActivity {
     }
 
     private void signIn(String email, String password) {
+        ProgressDialog progressDialog = new ProgressDialog(LoginPage.this);
+        progressDialog.setMessage("Signing in...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
+                    progressDialog.dismiss();
+
                     Log.d("MyTask", "" + task);
                     if (task.isSuccessful()) {
-                        // Sign in success
                         FirebaseUser user = mAuth.getCurrentUser();
                         Log.d("myuservalue", "" + user);
                         checkUserRoll(user);
                     } else {
-                        // If sign in fails, display a message to the user.
-                        Toast.makeText(LoginPage.this, "Authentication failed.",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginPage.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                     }
                 });
     }

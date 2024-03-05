@@ -1,5 +1,6 @@
 package com.example.mydoctor.patients_classes.fragments;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -23,6 +24,7 @@ public class PatientsProfile extends Fragment {
     private User user;
     TextView fullName,email,phoneNumber,nameBelowPhoto,deleteAccountTextView;
     Button logOut;
+    ProgressDialog dialog;
 
 
     @Override
@@ -70,6 +72,11 @@ public class PatientsProfile extends Fragment {
         return view;
     }
     private void deleteAccount() {
+        dialog = new ProgressDialog(getContext());
+        dialog.setCancelable(false);
+        dialog.setMessage("Loading.....");
+        dialog.show();
+
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user != null){
             String uid = user.getUid();
@@ -81,17 +88,32 @@ public class PatientsProfile extends Fragment {
                             if (task.isSuccessful()) {
                                 Log.d("Delete Account", "User account deleted.");
                                 FirebaseAuth.getInstance().signOut();
+                                if(dialog != null && dialog.isShowing()) {
+                                    dialog.dismiss();
+                                }
                                 openLoginActivity();
                             } else {
                                 Log.w("Delete Account", "Failed to delete user account.", task.getException());
+                                if(dialog != null && dialog.isShowing()) {
+                                    dialog.dismiss();
+                                }
                             }
                         });
                     })
-                    .addOnFailureListener(e -> Log.w("Firestore", "Error deleting user document", e));
+                    .addOnFailureListener(e -> {
+                        Log.w("Firestore", "Error deleting user document", e);
+                        if(dialog != null && dialog.isShowing()) {
+                            dialog.dismiss();
+                        }
+                    });
         }else{
             Log.d("Delete Account", "No user to delete.");
+            if(dialog != null && dialog.isShowing()) {
+                dialog.dismiss();
+            }
         }
     }
+
 
     private void openLoginActivity() {
         FirebaseAuth.getInstance().signOut();
