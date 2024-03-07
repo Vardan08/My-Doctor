@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -26,13 +27,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mydoctor.forgot_password_classes.ForgotPassword;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SignUpPage extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
@@ -159,10 +169,7 @@ public class SignUpPage extends AppCompatActivity {
                 // Additional validation checks if needed
 
                 String selectedRole = spinner.getSelectedItem().toString();
-                if ("Doctor".equals(selectedRole) && smallPhotoImageView.getDrawable() != null
-                        && extraImageView1.getDrawable() != null && extraImageView2.getDrawable() != null) {
 
-                }
                 dialog.show();
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 // Check if the phone number is already in use
@@ -186,6 +193,10 @@ public class SignUpPage extends AppCompatActivity {
                                             .set(newUser)
                                             .addOnSuccessListener(aVoid -> {
                                                 Log.d(TAG, "Document successfully added!");
+                                                if ("Doctor".equals(selectedRole) && smallPhotoImageView.getDrawable() != null
+                                                        && extraImageView1.getDrawable() != null && extraImageView2.getDrawable() != null) {
+                                                    uploadImages(firebaseUser.getUid(),smallPhotoImageView,extraImageView1,extraImageView2);
+                                                }
 
 
                                                 // Clear all EditText fields here
@@ -280,6 +291,59 @@ public class SignUpPage extends AppCompatActivity {
             }
         });
     }
+    private void uploadImages(String userId, ImageView... images) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+
+        List<Task<Uri>> uploadTasks = new ArrayList<>();
+
+        for (int i = 0; i < images.length; i++) {
+            ImageView imageView = images[i];
+            String imageName = "image" + i + ".jpg"; // Or generate a unique name based on the user ID
+            StorageReference imageRef = storageRef.child("images/" + userId + "/" + imageName);
+            imageView.setDrawingCacheEnabled(true);
+            imageView.buildDrawingCache();
+            Bitmap bitmap = imageView.getDrawingCache();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] data = baos.toByteArray();
+
+            UploadTask uploadTask = imageRef.putBytes(data);
+            uploadTasks.add(uploadTask.continueWithTask(task -> {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+                // Continue with the task to get the download URL
+                return imageRef.getDownloadUrl();
+            }));
+        }
+
+        Tasks.whenAllSuccess(uploadTasks).addOnSuccessListener(results -> {
+            // Here you have all the image URLs in results, you can store them in Firestore
+            Map<String, Object> imageUrls = new HashMap<>();
+            for (int i = 0; i < results.size(); i++) {
+                Uri downloadUri = (Uri) results.get(i);
+                imageUrls.put("imageUrl" + i, downloadUri.toString());
+            }
+
+            // Update the user's document with the image URLs
+            FirebaseFirestore.getInstance().collection("users").document(userId)
+                    .update(imageUrls)
+                    .addOnSuccessListener(aVoid -> {
+                        // Images uploaded and URLs saved to Firestore successfully
+                        dialog.dismiss();
+                        openLoginPage(); // Navigate to login page or show success message
+                    })
+                    .addOnFailureListener(e -> {
+                        // Handle the error
+                        dialog.dismiss();
+                    });
+        }).addOnFailureListener(e -> {
+            // Handle failure in uploading images
+            dialog.dismiss();
+        });
+    }
+
     private void clearImages(ImageView... images) {
         for (ImageView image : images) {
             image.setImageDrawable(null); // Removes the image
