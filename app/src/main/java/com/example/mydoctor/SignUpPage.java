@@ -23,6 +23,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -123,7 +124,7 @@ public class SignUpPage extends AppCompatActivity {
         spinnerArrList = new ArrayList<>(Arrays.asList(getResources().getStringArray(R.array.user_roles)));
         spinnerArrAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerArrList);
         spinnerArrAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
-        spinner.setAdapter(spinnerArrAdapter);
+        spinner.setAdapter((SpinnerAdapter) spinnerArrAdapter);
 
         // Set up Attach Photo button click listener
         attachPhotoBtn.setOnClickListener(new View.OnClickListener() {
@@ -216,6 +217,7 @@ public class SignUpPage extends AppCompatActivity {
 
                                                 // Navigate to login page or show success message
                                                 openLoginPage();
+
                                             })
                                             .addOnFailureListener(e -> {
                                                 Log.w(TAG, "Error adding document", e);
@@ -332,7 +334,6 @@ public class SignUpPage extends AppCompatActivity {
                     .addOnSuccessListener(aVoid -> {
                         // Images uploaded and URLs saved to Firestore successfully
                         dialog.dismiss();
-                        openLoginPage(); // Navigate to login page or show success message
                     })
                     .addOnFailureListener(e -> {
                         // Handle the error

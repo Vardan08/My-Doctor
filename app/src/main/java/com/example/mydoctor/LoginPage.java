@@ -134,6 +134,8 @@ public class LoginPage extends AppCompatActivity {
     }
 
     private void openSignUpPage() {
+        emailText.setText("");
+        passText.setText("");
         Intent intent = new Intent(this, SignUpPage.class);
         startActivity(intent);
     }
@@ -194,6 +196,8 @@ public class LoginPage extends AppCompatActivity {
         }
     }
     private void openForgotPassword() {
+        emailText.setText("");
+        passText.setText("");
         Intent intent = new Intent(LoginPage.this, ForgotPassword.class);
         startActivity(intent);
     }

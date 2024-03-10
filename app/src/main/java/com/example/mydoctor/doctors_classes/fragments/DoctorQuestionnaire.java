@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 
 import com.example.mydoctor.R;
 
@@ -29,7 +30,7 @@ public class DoctorQuestionnaire extends Fragment {
         receivingArrayList.add("don't received");
         receivingAdapter = new ArrayAdapter(getContext(), android.R.layout.simple_spinner_item, receivingArrayList);
         receivingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
-        receiving.setAdapter(receivingAdapter);
+        receiving.setAdapter((SpinnerAdapter) receivingAdapter);
         return view;
     }
 }
