@@ -10,18 +10,19 @@ public class User implements Parcelable {
     private String location;
     private String password;
     private String roll;
+    private String clinicId;
 
     public User() {}
 
-    public User(String fullName, String email, String mobileNumber, String location, String password, String roll) {
+    public User(String fullName, String email, String mobileNumber, String location, String password, String roll,String clinicId) {
         this.fullName = fullName;
         this.email = email;
         this.mobileNumber = mobileNumber;
         this.location = location;
         this.password = password;
         this.roll = roll;
+        this.clinicId = clinicId;
     }
-
     protected User(Parcel in) {
         fullName = in.readString();
         email = in.readString();
@@ -29,6 +30,15 @@ public class User implements Parcelable {
         location = in.readString();
         password = in.readString();
         roll = in.readString();
+        clinicId = in.readString();
+    }
+
+    public String getClinicId() {
+        return clinicId;
+    }
+
+    public void setClinicId(String clinicId) {
+        this.clinicId = clinicId;
     }
 
     @Override
@@ -39,6 +49,7 @@ public class User implements Parcelable {
         dest.writeString(location);
         dest.writeString(password);
         dest.writeString(roll);
+        dest.writeString(clinicId);
     }
 
     @Override
