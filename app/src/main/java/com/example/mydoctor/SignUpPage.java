@@ -28,12 +28,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mydoctor.forgot_password_classes.ForgotPassword;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -55,14 +58,22 @@ public class SignUpPage extends AppCompatActivity {
     private EditText locationEditText;
     private EditText passwordEditText;
     private EditText confirmPasswordEditText;
+    private List<String> regionIds = new ArrayList<>();
+    private String selectedClinicId;
+    List<String> clinicIds = new ArrayList<>();
+
     ProgressDialog dialog;
     Button signUpButton, attachPhotoBtn, extraButton1, extraButton2;
-    Spinner spinner;
+    Spinner spinner, regions, cities, clinics;
     ArrayList<String> spinnerArrList;
     ArrayAdapter<String> spinnerArrAdapter;
     ImageView smallPhotoImageView, extraImageView1, extraImageView2;
+    List<String> regionsList, citiesList;
     FirebaseFirestore db;
-
+    List<String> cityIds;
+    List<String> cityNames;
+    List<String> clinicsList = new ArrayList<>();
+    ArrayAdapter<String> clinicsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +84,9 @@ public class SignUpPage extends AppCompatActivity {
         TextView alreadyUserTextView = findViewById(R.id.already_user);
         signUpButton = findViewById(R.id.signUpBtn);
         spinner = findViewById(R.id.spinner);
+        regions = findViewById(R.id.regions);
+        cities = findViewById(R.id.cities);
+        clinics = findViewById(R.id.clinics);
         attachPhotoBtn = findViewById(R.id.attachPhotoBtn);
         smallPhotoImageView = findViewById(R.id.smallPhotoImageView);
         extraButton1 = findViewById(R.id.attachPhotoBtn1);
@@ -89,6 +103,7 @@ public class SignUpPage extends AppCompatActivity {
         dialog = new ProgressDialog(SignUpPage.this);
         dialog.setCancelable(false);
         dialog.setMessage("Loading.....");
+        db = FirebaseFirestore.getInstance();
 
         if (savedInstanceState != null) {
             fullNameEditText.setText(savedInstanceState.getString("fullName"));
@@ -125,6 +140,52 @@ public class SignUpPage extends AppCompatActivity {
         spinnerArrAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerArrList);
         spinnerArrAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
         spinner.setAdapter((SpinnerAdapter) spinnerArrAdapter);
+
+        regionsList = new ArrayList<>();
+        regionsList.add("Choose Region");
+        ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, regionsList);
+        regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        regions.setAdapter(regionAdapter);
+        db.collection("regions").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                regionIds.clear();
+                regionsList.clear(); // Clear existing items
+                regionsList.add("Choose Region"); // Add initial prompt
+                regionIds.add(null); // Corresponding entry for the initial prompt
+
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    String docName = document.getString("name");
+                    String docId = document.getId(); // Assuming you want to track region IDs
+
+                    regionsList.add(docName);
+                    regionIds.add(docId); // Make sure this matches the `regionsList`
+                }
+                // Notify the adapter about data changes
+                regionAdapter.notifyDataSetChanged();
+            } else {
+                Log.d("FirestoreError", "Error getting documents: ", task.getException());
+            }
+        });
+
+        regions.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position > 0 && position < regionIds.size()) { // Check bounds
+                    String selectedRegionId = regionIds.get(position);
+                    loadCitiesForRegion(selectedRegionId);
+                    cities.setVisibility(View.VISIBLE);
+                } else {
+                    cities.setVisibility(View.GONE);
+                    clinics.setVisibility((View.GONE));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Nothing to do here
+            }
+        });
+
 
         // Set up Attach Photo button click listener
         attachPhotoBtn.setOnClickListener(new View.OnClickListener() {
@@ -172,7 +233,7 @@ public class SignUpPage extends AppCompatActivity {
                 String selectedRole = spinner.getSelectedItem().toString();
 
                 dialog.show();
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
+
                 // Check if the phone number is already in use
                 db.collection("users").whereEqualTo("mobileNumber", mobileNumber).get().addOnCompleteListener(task -> {
 
@@ -188,7 +249,16 @@ public class SignUpPage extends AppCompatActivity {
                                 FirebaseUser firebaseUser = mAuth.getCurrentUser();
                                 if (firebaseUser != null) {
                                     // Creating a user object to store in Firestore
-                                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole);
+                                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole,null);
+                                    if ("Doctor".equals(selectedRole)) {
+                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, selectedClinicId);
+                                        // The rest of your registration process follows
+                                    } else {
+                                        // For other roles where clinicId is not required
+                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole,null);
+                                        // The rest of your registration process follows
+                                    }
+
                                     // Add additional user details to Firestore
                                     db.collection("users").document(firebaseUser.getUid())
                                             .set(newUser)
@@ -274,12 +344,18 @@ public class SignUpPage extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 String selectedRole = spinner.getSelectedItem().toString();
                 if ("Patient".equals(selectedRole)) {
+                    regions.setVisibility(View.GONE);
+                    cities.setVisibility(View.GONE);
+                    clinics.setVisibility(View.GONE);
                     imageUri = null;
                     setButtonVisibility(View.GONE, attachPhotoBtn, extraButton1, extraButton2);
                     setImageViewVisibility(View.GONE, smallPhotoImageView, extraImageView1, extraImageView2);
                     // Increase the top margin for the "Sign Up" button when buttons are gone
                     setSignUpButtonTopMargin(0);
                 } else {
+                    regions.setVisibility(View.VISIBLE);
+                    cities.setVisibility(View.VISIBLE);
+                    clinics.setVisibility(View.VISIBLE);
                     setButtonVisibility(View.VISIBLE, attachPhotoBtn, extraButton1, extraButton2);
                     setImageViewVisibility(View.VISIBLE, smallPhotoImageView, extraImageView1, extraImageView2);
                     // Reset the top margin for the "Sign Up" button
@@ -293,6 +369,100 @@ public class SignUpPage extends AppCompatActivity {
             }
         });
     }
+    private void loadCitiesForRegion(String regionId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("cities")
+                .whereEqualTo("regionId", regionId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        cityNames = new ArrayList<>();
+                        cityNames.add("Choose City");
+                        cityIds = new ArrayList<>(); // Если вам нужны ID городов
+
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            cityNames.add(document.getString("name")); // Предполагается, что у документов есть поле name
+                            cityIds.add(document.getId()); // Получаем ID документа
+                        }
+
+                        // Теперь у вас есть список городов, вы можете обновить ваш spinner2
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(SignUpPage.this, android.R.layout.simple_spinner_dropdown_item, cityNames);
+                        cities.setAdapter(adapter);
+                        cities.setVisibility(View.VISIBLE); // Показываем spinner2 с загруженными городами
+                    } else {
+                        Log.w("Firestore", "Error getting documents.", task.getException());
+                    }
+                });
+        cities.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position > 0) {
+                    // Code to load clinics based on the selected city
+                    String selectedCityId = cityIds.get(position - 1); // Assuming you have a similar list for city IDs
+                    loadClinicsForCity(selectedCityId);
+                    clinics.setVisibility(View.VISIBLE);
+                } else {
+                    clinics.setVisibility(View.GONE); // Hide or reset clinics if "Choose City" is selected
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+
+
+
+    }
+    private void loadClinicsForCity(String cityId) {
+        clinics.setAdapter(clinicsAdapter);
+        clinicsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, clinicsList);
+        clinicsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        clinics.setAdapter(clinicsAdapter);
+        // Clear the existing clinics list (except for the initial "Choose Clinic" placeholder)
+        if (clinicsList.size() > 1) {
+            clinicsList.subList(1, clinicsList.size()).clear();
+        }
+        // Query Firestore for clinics in the selected city
+        db.collection("clinics")
+                .whereEqualTo("cityId", cityId)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            clinicsList.add("Choose Clinic");
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                String clinicName = document.getString("name"); // Assuming each clinic document has a 'name' field
+                                clinicsList.add(clinicName);
+                                String clinicIdsStr = document.getId();
+                                Log.d("ids",clinicIdsStr);
+                                clinicIds.add(clinicIdsStr);
+                            }
+                            // Notify the clinicsAdapter that its dataset has changed to refresh the spinner
+                            clinicsAdapter.notifyDataSetChanged();
+                        } else {
+                            Log.w(TAG, "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
+        clinics.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position > 0) {
+                    // Assuming position 0 is "Choose Clinic", and clinicIds is aligned with your clinicsList
+                    selectedClinicId = clinicIds.get(position - 1);
+                } else {
+                    selectedClinicId = null; // No clinic or "Choose Clinic" selected
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+    }
+
+
     private void uploadImages(String userId, ImageView... images) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
