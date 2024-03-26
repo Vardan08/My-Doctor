@@ -43,6 +43,7 @@ public class ChildrenPatientRegistration extends Fragment {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
     Map<String, Object> child = new HashMap<>();
+    String doctorFullName;
     String doctorName;
 
     @Override
@@ -85,9 +86,9 @@ public class ChildrenPatientRegistration extends Fragment {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             String fullName = document.getString("fullName");
-                            doctorName = document.getString("Doctor");
-                            if (fullName != null && doctorName != null) {
-                                fetchDoctorAndAddChildCard(fullName,doctorName);
+                            String doctorId = document.getString("Doctor");
+                            if (fullName != null && doctorId != null) {
+                                fetchDoctorAndAddChildCard(fullName, doctorId);
                             }
                         }
                     } else {
@@ -99,9 +100,10 @@ public class ChildrenPatientRegistration extends Fragment {
     private void fetchDoctorAndAddChildCard(String childFullName, String doctorId) {
         db.collection("users").document(doctorId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
-                String doctorFullName = documentSnapshot.getString("fullName"); // Assuming the doctor's name is stored under "fullName"
-                String displayText = childFullName + " - Doctor: " + doctorFullName;
-                addChildCard(childFullName, doctorFullName); // Updated method to handle both names
+                doctorFullName = documentSnapshot.getString("fullName");
+                if (doctorFullName != null) {
+                    addChildCard(childFullName, doctorFullName);
+                }
             }
         }).addOnFailureListener(e -> {
             // Handle any errors, such as the doctor's document not existing
@@ -379,7 +381,7 @@ public class ChildrenPatientRegistration extends Fragment {
                     progressDialog.dismiss();
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            String doctorName = document.getString("fullName"); // Assuming there's a 'name' field
+                            doctorName = document.getString("fullName"); // Assuming there's a 'name' field
                             String doctorId = document.getId();
                             if (doctorName != null) {
                                 doctorsList.add(doctorName);
@@ -422,6 +424,8 @@ public class ChildrenPatientRegistration extends Fragment {
 
 
 
+
+    @SuppressLint("SetTextI18n")
     private void addChildCard(String fullName, String doctorFullName) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View cardView = inflater.inflate(R.layout.card_view_layout, this.container, false);
@@ -431,7 +435,7 @@ public class ChildrenPatientRegistration extends Fragment {
 
         // Assuming you have another TextView with id textViewDoctor for the doctor's name
         TextView doctorNameTextView = cardView.findViewById(R.id.textViewDoctor);
-        doctorNameTextView.setText("Doctor: " + doctorFullName);
+        doctorNameTextView.setText("Dr: " + doctorFullName);
 
         this.container.addView(cardView);
 
