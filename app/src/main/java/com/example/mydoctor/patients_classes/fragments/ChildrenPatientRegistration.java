@@ -43,7 +43,6 @@ public class ChildrenPatientRegistration extends Fragment {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
     Map<String, Object> child = new HashMap<>();
-    String doctorFullName;
     String doctorName;
 
     @Override
@@ -100,9 +99,9 @@ public class ChildrenPatientRegistration extends Fragment {
     private void fetchDoctorAndAddChildCard(String childFullName, String doctorId) {
         db.collection("users").document(doctorId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
-                doctorFullName = documentSnapshot.getString("fullName");
-                if (doctorFullName != null) {
-                    addChildCard(childFullName, doctorFullName);
+                doctorName = documentSnapshot.getString("fullName");
+                if (doctorName != null) {
+                    addChildCard(childFullName, doctorName);
                 }
             }
         }).addOnFailureListener(e -> {
@@ -400,8 +399,10 @@ public class ChildrenPatientRegistration extends Fragment {
                                 if(position > 0){
                                     String selectedDoctor = (String) parent.getItemAtPosition(position);
                                     String selectedDoctorId = doctorIdMap.get(selectedDoctor);
-                                    if(selectedDoctorId != null) {
+                                    String selectedDoctorName = doctorsList.get(position);
+                                    if(selectedDoctorId != null && selectedDoctorName != null) {
                                         child.put("Doctor",selectedDoctorId);
+                                        doctorName = selectedDoctorName;
                                     }
                                 }
                             }
