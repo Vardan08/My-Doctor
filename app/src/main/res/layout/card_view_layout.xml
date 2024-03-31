@@ -21,6 +21,7 @@
             android:orientation="vertical">
 
             <ImageView
+                android:id="@+id/imageViewChild"
                 android:layout_width="237dp"
                 android:layout_height="51dp"
                 android:layout_centerHorizontal="true"

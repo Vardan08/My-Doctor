@@ -1,18 +1,29 @@
 package com.example.mydoctor.patients_classes.fragments;
 
+import static com.example.mydoctor.SignUpPage.PICK_IMAGE_REQUEST;
+import static com.google.common.io.Files.getFileExtension;
+
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -23,12 +34,19 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.bumptech.glide.Glide;
 import com.example.mydoctor.R;
 import com.example.mydoctor.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,13 +55,16 @@ import java.util.List;
 import java.util.Map;
 
 public class ChildrenPatientRegistration extends Fragment {
-
+    private String currentChildIdForImageUpload;
+    private ImageView activeImageView;
     private LinearLayout container;
     private User user;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
     Map<String, Object> child = new HashMap<>();
     String doctorName;
+    ImageView childImageView;
+    private Map<String, ImageView> childIdToImageViewMap = new HashMap<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,6 +90,7 @@ public class ChildrenPatientRegistration extends Fragment {
         return view;
     }
 
+
     private void fetchChildrenAndDisplay() {
         if (currentUser == null) return;
 
@@ -87,7 +109,7 @@ public class ChildrenPatientRegistration extends Fragment {
                             String fullName = document.getString("fullName");
                             String doctorId = document.getString("Doctor");
                             if (fullName != null && doctorId != null) {
-                                fetchDoctorAndAddChildCard(fullName, doctorId);
+                                fetchDoctorAndAddChildCard(document, doctorId);
                             }
                         }
                     } else {
@@ -96,12 +118,12 @@ public class ChildrenPatientRegistration extends Fragment {
                 });
     }
 
-    private void fetchDoctorAndAddChildCard(String childFullName, String doctorId) {
+    private void fetchDoctorAndAddChildCard(DocumentSnapshot child, String doctorId) {
         db.collection("users").document(doctorId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 doctorName = documentSnapshot.getString("fullName");
                 if (doctorName != null) {
-                    addChildCard(childFullName, doctorName);
+                    addChildCard(child, doctorName);
                 }
             }
         }).addOnFailureListener(e -> {
@@ -185,9 +207,29 @@ public class ChildrenPatientRegistration extends Fragment {
 
         db.collection("users").document(currentUser.getUid()).collection("children").add(child)
                 .addOnSuccessListener(documentReference -> {
+                    Log.d("myDcRef",documentReference+"");
                     Toast.makeText(getActivity(), "Child added successfully!", Toast.LENGTH_SHORT).show();
-                    addChildCard(fullName,doctorName);
-                    progressDialog.dismiss();
+                    documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                            if(task.isSuccessful()){
+                                DocumentSnapshot document = task.getResult();
+                                if (document.exists()) {
+                                    // Document was found
+                                    addChildCard(document,doctorName);
+                                    progressDialog.dismiss();
+                                } else {
+                                    // No such document
+                                    Log.d("TAG", "No such document");
+                                }
+                            }else {
+                                // Task failed with an exception
+                                Log.d("get failed with ", task.getException() + "");
+                            }
+                        }
+                    });
+
+
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(getActivity(), "Error adding child", Toast.LENGTH_SHORT).show();
@@ -426,21 +468,48 @@ public class ChildrenPatientRegistration extends Fragment {
 
 
 
-    @SuppressLint("SetTextI18n")
-    private void addChildCard(String fullName, String doctorFullName) {
+    @SuppressLint({"SetTextI18n", "ClickableViewAccessibility"})
+    private void addChildCard(DocumentSnapshot child, String doctorFullName) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View cardView = inflater.inflate(R.layout.card_view_layout, this.container, false);
+
+        Map<String, Object> user = child.getData();
+        assert user != null;
+        String fullName = (String) user.get("fullName");
+        String childId = child.getId();
 
         TextView fullNameTextView = cardView.findViewById(R.id.textView3);
         fullNameTextView.setText(fullName);
 
-        // Assuming you have another TextView with id textViewDoctor for the doctor's name
         TextView doctorNameTextView = cardView.findViewById(R.id.textViewDoctor);
         doctorNameTextView.setText("Dr: " + doctorFullName);
 
+        ImageView childImageView = cardView.findViewById(R.id.imageViewChild);
+        // Save ImageView reference with childId
+        childIdToImageViewMap.put(childId, childImageView);
+
+        // If imageUri exists, load it
+        if (user.containsKey("imageUri")) {
+            String imageUri = (String) user.get("imageUri");
+            Glide.with(this).load(imageUri).into(childImageView);
+        }
+
         this.container.addView(cardView);
 
+        // Set click listener for the ImageView to select image
+        childImageView.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+            // Use currentChildIdForImageUpload to identify the child for image upload
+            currentChildIdForImageUpload = childId;
+        });
+
+        // Additional code for setting other listeners and functionalities
         cardView.setOnClickListener(v -> {
+            // Make sure you are not setting the listener again if it's the ImageView that was clicked
+            // This is handled by not propagating the click event from the ImageView to the CardView
             PatientQuestionnaire anotherFragment = new PatientQuestionnaire();
             anotherFragment.setChildName(fullName); // Consider passing doctorFullName too if needed in the fragment
 
@@ -451,6 +520,70 @@ public class ChildrenPatientRegistration extends Fragment {
 
             fragmentTransaction.commit();
         });
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+            ImageView childImageView = childIdToImageViewMap.get(currentChildIdForImageUpload);
+            if (childImageView != null) {
+                childImageView.setImageURI(imageUri); // Display the selected image immediately
+                uploadImageToFirebaseStorage(imageUri, currentChildIdForImageUpload); // Upload to Firebase
+            }
+        }
+    }
+
+    private void uploadImageToFirebaseStorage(Uri imageUri, String childId) {
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setTitle("Uploading...");
+        progressDialog.show();
+
+        StorageReference storageRef = FirebaseStorage.getInstance().getReference("child_images");
+        // Use the child ID as part of the file name to ensure uniqueness and easier retrieval
+        String fileName = childId + "_" + System.currentTimeMillis() + "." + getFileExtension(getActivity(), imageUri);
+        StorageReference fileRef = storageRef.child(fileName);
+
+        fileRef.putFile(imageUri).addOnSuccessListener(taskSnapshot -> {
+            progressDialog.dismiss();
+            Toast.makeText(getActivity(), "Upload successful", Toast.LENGTH_LONG).show();
+            fileRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                // Assuming you have a HashMap that maps child IDs to their ImageView
+                ImageView childImageView = childIdToImageViewMap.get(childId);
+                if (childImageView != null) {
+                    Glide.with(this).load(downloadUri.toString()).into(childImageView);
+                }
+                saveImageInfoToFirestore(downloadUri.toString(), childId); // Save downloadUri in Firestore
+            });
+        }).addOnFailureListener(e -> {
+            progressDialog.dismiss();
+            Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
+        }).addOnProgressListener(taskSnapshot -> {
+            double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+            progressDialog.setMessage("Uploaded " + (int) progress + "%");
+        });
+    }
+
+    /**
+     * Get the file extension of the file in the Uri.
+     * @param context The context.
+     * @param uri The Uri of the file.
+     * @return The file extension as a String.
+     */
+    public static String getFileExtension(Context context, Uri uri) {
+        ContentResolver contentResolver = context.getContentResolver();
+        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+        return mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri));
+    }
+
+    private void saveImageInfoToFirestore(String imageUrl, String childId) {
+        // Get a reference to the Firestore document of the child
+        DocumentReference childDocRef = FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).collection("children").document(childId);
+
+        // Update the document with the new image URL
+        childDocRef.update("imageUri", imageUrl)
+                .addOnSuccessListener(aVoid -> Log.d("Firestore", "DocumentSnapshot successfully updated with new image URI"))
+                .addOnFailureListener(e -> Log.w("Firestore", "Error updating document", e));
     }
 
 }
