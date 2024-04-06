@@ -88,7 +88,13 @@ public class LoginPage extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         Log.d("myuservalue", "" + user);
-                        checkUserRoll(user);
+                        if (user != null && user.isEmailVerified()) {
+                            checkUserRoll(user);
+                        }else {
+                            // Email is not verified
+                            Toast.makeText(LoginPage.this, "Email is not verified. Please check your email.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     } else {
                         Toast.makeText(LoginPage.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                     }

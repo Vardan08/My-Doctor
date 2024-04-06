@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".doctors_classes.fragments.PatientData">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:cardUseCompatPadding="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/profilePhoto"
+                android:layout_width="237dp"
+                android:layout_height="51dp"
+                android:layout_gravity="center"
+                android:src="@drawable/user" />
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Full Name" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:cardUseCompatPadding="true"
+        android:layout_marginTop="100dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/child"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Child:"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textNameLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/child"
+                android:text="Name:"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textNameLabel"
+                android:layout_marginTop="8dp"
+                android:text="Vardan"/>
+
+            <TextView
+                android:id="@+id/textDobLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textName"
+                android:layout_marginTop="8dp"
+                android:text="DOB:"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textDob"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textDobLabel"
+                android:layout_marginTop="8dp"
+                android:text="DOB"/>
+
+            <TextView
+                android:id="@+id/textLocationLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textDob"
+                android:layout_marginTop="8dp"
+                android:text="Location"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textLocationLabel"
+                android:layout_marginTop="8dp"
+                android:text="Location"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:gravity="right"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/user"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Parrent:"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textParentNameLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/user"
+                android:text="Name:"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textParentName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textParentNameLabel"
+                android:layout_marginTop="8dp"
+                android:text="Vardan"/>
+
+            <TextView
+                android:id="@+id/textEmailLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textParentName"
+                android:layout_marginTop="8dp"
+                android:text="Email:"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textEmailLabel"
+                android:layout_marginTop="8dp"
+                android:text="Email"/>
+
+            <TextView
+                android:id="@+id/textMobileNumberLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/email"
+                android:layout_marginTop="8dp"
+                android:text="Mobile Number"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/mobileNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textMobileNumberLabel"
+                android:layout_marginTop="8dp"
+                android:text="Mobile Number"/>
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+</FrameLayout>
