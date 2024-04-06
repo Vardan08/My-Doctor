@@ -59,12 +59,15 @@ public class ChildrenPatientRegistration extends Fragment {
     private ImageView activeImageView;
     private LinearLayout container;
     private User user;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    String status;
+    boolean isShowed;
     Map<String, Object> child = new HashMap<>();
     String doctorName;
     ImageView childImageView;
-    private Map<String, ImageView> childIdToImageViewMap = new HashMap<>();
+    String selectedDoctorId;
+    private final Map<String, ImageView> childIdToImageViewMap = new HashMap<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -109,7 +112,50 @@ public class ChildrenPatientRegistration extends Fragment {
                             String fullName = document.getString("fullName");
                             String doctorId = document.getString("Doctor");
                             if (fullName != null && doctorId != null) {
-                                fetchDoctorAndAddChildCard(document, doctorId);
+                                String childId = (String) document.getId();
+                                db.collection("requests").whereEqualTo("childId",childId).get().addOnCompleteListener(task2 -> {
+                                    if(task2.isSuccessful()){
+                                        for (QueryDocumentSnapshot document2 : task2.getResult()) {
+                                            status = document2.getString("status");
+                                            isShowed = Boolean.TRUE.equals(document2.getBoolean("isShowed"));
+                                            if (status != null) {
+                                                if(!(status.equals("Deleted"))){
+                                                    fetchDoctorAndAddChildCard(document, doctorId,status,isShowed);
+                                                }// Else part where you show the toast and possibly want to delete a document
+                                                else {
+                                                    String childFullName = (String) document.get("fullName");
+                                                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                                                    // Set the title and message for the dialog
+                                                    builder.setTitle("Request Refused");
+                                                    builder.setMessage("We're sorry, but the doctor refused to be your child's " + "(" + childFullName + ")" + " doctor.");
+
+                                                    // Add a positive button to the dialog and its click listener
+                                                    builder.setPositiveButton("OK", (dialog, which) -> {
+                                                        // Dismiss the dialog when the button is clicked
+                                                        dialog.dismiss();
+                                                    });
+
+                                                    // Create the AlertDialog and show it
+                                                    AlertDialog dialog = builder.create();
+                                                    dialog.show();
+                                                    // Assuming childId is the ID of the document you intend to delete
+                                                    db.collection("users").document(currentUser.getUid()).collection("children").document(childId)
+                                                            .delete() // Delete the document
+                                                            .addOnSuccessListener(aVoid -> {
+                                                                // Handle successful deletion
+                                                                Log.d("DocumentDelete", "DocumentSnapshot successfully deleted!");
+                                                            })
+                                                            .addOnFailureListener(e -> {
+                                                                // Handle any errors during deletion
+                                                                Log.w("DocumentDelete", "Error deleting document", e);
+                                                            });
+                                                }
+
+                                            }
+                                            progressDialog.dismiss();
+                                        }
+                                    }
+                                });
                             }
                         }
                     } else {
@@ -118,12 +164,12 @@ public class ChildrenPatientRegistration extends Fragment {
                 });
     }
 
-    private void fetchDoctorAndAddChildCard(DocumentSnapshot child, String doctorId) {
+    private void fetchDoctorAndAddChildCard(DocumentSnapshot child, String doctorId,String status,boolean isShowed) {
         db.collection("users").document(doctorId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 doctorName = documentSnapshot.getString("fullName");
                 if (doctorName != null) {
-                    addChildCard(child, doctorName);
+                    addChildCard(child, doctorName,status,isShowed);
                 }
             }
         }).addOnFailureListener(e -> {
@@ -209,6 +255,7 @@ public class ChildrenPatientRegistration extends Fragment {
                 .addOnSuccessListener(documentReference -> {
                     Log.d("myDcRef",documentReference+"");
                     Toast.makeText(getActivity(), "Child added successfully!", Toast.LENGTH_SHORT).show();
+                    createRequestForDoctor(documentReference.getId(), progressDialog);
                     documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -216,8 +263,19 @@ public class ChildrenPatientRegistration extends Fragment {
                                 DocumentSnapshot document = task.getResult();
                                 if (document.exists()) {
                                     // Document was found
-                                    addChildCard(document,doctorName);
-                                    progressDialog.dismiss();
+                                    String childId = document.getId();
+                                    db.collection("requests").whereEqualTo("childId",childId).get().addOnCompleteListener(task2 -> {
+                                        if(task2.isSuccessful()){
+                                            for (QueryDocumentSnapshot document2 : task2.getResult()) {
+                                                status = document2.getString("status");
+                                                isShowed = Boolean.TRUE.equals(document2.getBoolean("isShowed"));
+                                                if (status != null) {
+                                                    addChildCard(document,doctorName,status,isShowed);
+                                                }
+                                                progressDialog.dismiss();
+                                            }
+                                        }
+                                    });
                                 } else {
                                     // No such document
                                     Log.d("TAG", "No such document");
@@ -234,6 +292,24 @@ public class ChildrenPatientRegistration extends Fragment {
                 .addOnFailureListener(e -> {
                     Toast.makeText(getActivity(), "Error adding child", Toast.LENGTH_SHORT).show();
                     progressDialog.dismiss();
+                });
+    }
+    private void createRequestForDoctor(String childId, ProgressDialog progressDialog) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("childId", childId);
+        request.put("doctorId", selectedDoctorId);
+        request.put("status", "pending");
+
+        db.collection("requests").add(request)
+                .addOnSuccessListener(documentReference -> {
+                    progressDialog.dismiss();
+                    Log.d("RequestCreation", "Request created with ID: " + documentReference.getId());
+                    // Here you can fetch and display the newly added child with "pending" status,
+                    // or trigger any UI update you deem necessary
+                })
+                .addOnFailureListener(e -> {
+                    progressDialog.dismiss();
+                    Log.e("RequestCreation", "Error adding request", e);
                 });
     }
     private void fetchRegionsAndPopulateSpinner(Spinner regionsSpinner, Spinner citiesSpinner, Spinner clinicsSpinner,Spinner doctorsSpinner) {
@@ -440,7 +516,7 @@ public class ChildrenPatientRegistration extends Fragment {
                             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                                 if(position > 0){
                                     String selectedDoctor = (String) parent.getItemAtPosition(position);
-                                    String selectedDoctorId = doctorIdMap.get(selectedDoctor);
+                                    selectedDoctorId = doctorIdMap.get(selectedDoctor);
                                     String selectedDoctorName = doctorsList.get(position);
                                     if(selectedDoctorId != null && selectedDoctorName != null) {
                                         child.put("Doctor",selectedDoctorId);
@@ -469,17 +545,63 @@ public class ChildrenPatientRegistration extends Fragment {
 
 
     @SuppressLint({"SetTextI18n", "ClickableViewAccessibility"})
-    private void addChildCard(DocumentSnapshot child, String doctorFullName) {
+    private void addChildCard(DocumentSnapshot child, String doctorFullName,String status,boolean isShowed) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View cardView = inflater.inflate(R.layout.card_view_layout, this.container, false);
 
         Map<String, Object> user = child.getData();
         assert user != null;
         String fullName = (String) user.get("fullName");
+        String location = (String) user.get("location");
+        String dob = (String) user.get("dob");
         String childId = child.getId();
 
-        TextView fullNameTextView = cardView.findViewById(R.id.textView3);
+        TextView stausTextView = cardView.findViewById(R.id.status);
+        if(status.equals("pending")){
+            stausTextView.setText("Dr. Answer: " + status);
+            stausTextView.setVisibility(View.VISIBLE);
+        } else if (status.equals("The doctor agreed for your child to become his patient") && !isShowed) {
+            // Use AlertDialog.Builder to construct the dialog
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            // Set the title and message for the dialog
+            builder.setTitle("Confirmation");
+            builder.setMessage("The doctor " + doctorFullName + " agreed for your child " + fullName + " to become his patient");
+
+            // Add a positive button to the dialog and its click listener
+            builder.setPositiveButton("OK", (dialog, which) -> {
+                // Dismiss the dialog when the button is clicked
+                dialog.dismiss();
+            });
+
+            // Create the AlertDialog and show it
+            AlertDialog dialog = builder.create();
+            dialog.show();
+
+            // Continue with the Firestore update as before
+            db.collection("requests").whereEqualTo("childId", childId).get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                            if (documentSnapshot.exists()) {
+                                String documentId = documentSnapshot.getId();
+                                Map<String, Object> updates = new HashMap<>();
+                                updates.put("isShowed", true); // Update isShowed to true
+                                db.collection("requests").document(documentId).update(updates)
+                                        .addOnSuccessListener(aVoid -> Log.d("UpdateStatus", "DocumentSnapshot successfully updated!"))
+                                        .addOnFailureListener(e -> Log.w("UpdateStatus", "Error updating document", e));
+                            }
+                        }
+                    });
+        }
+
+
+        TextView fullNameTextView = cardView.findViewById(R.id.textViewFullName);
         fullNameTextView.setText(fullName);
+
+        TextView locationTextView = cardView.findViewById(R.id.textViewLocation);
+        locationTextView.setText(location);
+
+        TextView dobTextView = cardView.findViewById(R.id.textViewDOB);
+        dobTextView.setText(dob);
 
         TextView doctorNameTextView = cardView.findViewById(R.id.textViewDoctor);
         doctorNameTextView.setText("Dr: " + doctorFullName);
@@ -510,15 +632,17 @@ public class ChildrenPatientRegistration extends Fragment {
         cardView.setOnClickListener(v -> {
             // Make sure you are not setting the listener again if it's the ImageView that was clicked
             // This is handled by not propagating the click event from the ImageView to the CardView
-            PatientQuestionnaire anotherFragment = new PatientQuestionnaire();
-            anotherFragment.setChildName(fullName); // Consider passing doctorFullName too if needed in the fragment
+            if(!(status.equals("pending"))){
+                PatientQuestionnaire anotherFragment = new PatientQuestionnaire();
+                anotherFragment.setChildName(fullName); // Consider passing doctorFullName too if needed in the fragment
 
-            FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
-            fragmentTransaction.addToBackStack(null);
+                FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
+                fragmentTransaction.addToBackStack(null);
 
-            fragmentTransaction.commit();
+                fragmentTransaction.commit();
+            }
         });
     }
     @Override

@@ -239,6 +239,7 @@ public class SignUpPage extends AppCompatActivity {
 
                     if (task.isSuccessful() && !task.getResult().isEmpty()) {
                         // Phone number is already in use
+                        dialog.dismiss();
                         Toast.makeText(SignUpPage.this, "This phone number is already in use.", Toast.LENGTH_SHORT).show();
                     } else if (task.isSuccessful()) {
                         // Phone number is not in use, proceed with creating the user
@@ -248,14 +249,26 @@ public class SignUpPage extends AppCompatActivity {
                                 // Registration success
                                 FirebaseUser firebaseUser = mAuth.getCurrentUser();
                                 if (firebaseUser != null) {
-                                    // Creating a user object to store in Firestore
-                                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole,null);
+                                    // Send verification email
+                                    firebaseUser.sendEmailVerification().addOnCompleteListener(task2 -> {
+                                        if (task2.isSuccessful()) {
+                                            Log.d(TAG, "Email verification sent.");
+                                            // Notify the user to check their email for verification
+                                            Toast.makeText(SignUpPage.this, "Registration successful. Please check your email for verification.", Toast.LENGTH_LONG).show();
+                                        } else {
+                                            Log.e(TAG, "sendEmailVerification", task2.getException());
+                                            Toast.makeText(SignUpPage.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+
+                                    // Assuming you create a User object to store in Firestore
+                                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, null);
                                     if ("Doctor".equals(selectedRole)) {
                                         newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, selectedClinicId);
                                         // The rest of your registration process follows
                                     } else {
                                         // For other roles where clinicId is not required
-                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole,null);
+                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, null);
                                         // The rest of your registration process follows
                                     }
 
@@ -296,18 +309,15 @@ public class SignUpPage extends AppCompatActivity {
                                 }
                             } else {
                                 // If sign up fails, display a message to the user.
+                                Log.w(TAG, "createUserWithEmail:failure", createUserTask.getException());
                                 if (createUserTask.getException() instanceof FirebaseAuthUserCollisionException) {
                                     Toast.makeText(SignUpPage.this, "This email is already in use.", Toast.LENGTH_SHORT).show();
-                                    dialog.dismiss();
                                 } else if (createUserTask.getException() != null) {
-                                    Toast.makeText(SignUpPage.this, "Authentication failed: " + createUserTask.getException().getMessage(),
-                                            Toast.LENGTH_SHORT).show();
-                                    dialog.dismiss();
+                                    Toast.makeText(SignUpPage.this, "Authentication failed: " + createUserTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
                                 } else {
-                                    Toast.makeText(SignUpPage.this, "Authentication failed.",
-                                            Toast.LENGTH_SHORT).show();
-                                    dialog.dismiss();
+                                    Toast.makeText(SignUpPage.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                                 }
+                                dialog.dismiss();
                             }
                         });
                     } else {
