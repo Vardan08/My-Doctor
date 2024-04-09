@@ -281,8 +281,6 @@ public class SignUpPage extends AppCompatActivity {
                                                         && extraImageView1.getDrawable() != null && extraImageView2.getDrawable() != null) {
                                                     uploadImages(firebaseUser.getUid(),smallPhotoImageView,extraImageView1,extraImageView2);
                                                 }
-
-
                                                 // Clear all EditText fields here
                                                 fullNameEditText.setText("");
                                                 emailEditText.setText("");
@@ -540,6 +538,7 @@ public class SignUpPage extends AppCompatActivity {
     private void openLoginPage() {
         // Handle the navigation to the login page here
         Intent intent = new Intent(this, LoginPage.class);
+        finish();
         startActivity(intent);
     }
 

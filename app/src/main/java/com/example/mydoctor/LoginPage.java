@@ -32,6 +32,33 @@ public class LoginPage extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if(currentUser != null && currentUser.isEmailVerified())
+        {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            DocumentReference docRef = db.collection("users").document(currentUser.getUid());
+            docRef.get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d("myUserDocument", "" + document);
+                        String roll = document.getString("roll"); // Assuming you have a 'roll' field
+                        if ("Doctor".equals(roll)) {
+                            openDoctorsHomePage();
+                        } else if ("Patient".equals(roll)) {
+                            openPatientHomePage();
+                        }
+                    } else {
+                        Toast.makeText(LoginPage.this, "No such user",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(LoginPage.this, "Error checking user roll",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_page);
         Toast.makeText(this, "hi", Toast.LENGTH_SHORT).show();
@@ -165,7 +192,7 @@ public class LoginPage extends AppCompatActivity {
                                 intent.putExtra("USER",userMetadata);
 
                                 startActivity(intent);
-
+                                finish();
 
                             }
                     );
@@ -193,7 +220,7 @@ public class LoginPage extends AppCompatActivity {
                                 intent.putExtra("USER",userMetadata);
 
                                 startActivity(intent);
-
+                                finish();
 
                             }
                     );
