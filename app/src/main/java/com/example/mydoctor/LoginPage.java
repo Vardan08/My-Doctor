@@ -1,5 +1,6 @@
 package com.example.mydoctor;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
@@ -25,6 +26,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Objects;
+
 public class LoginPage extends AppCompatActivity {
     Button login;
     EditText passText;
@@ -32,6 +35,41 @@ public class LoginPage extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if(currentUser != null && currentUser.isEmailVerified())
+        {
+            ProgressDialog progressDialog = new ProgressDialog(LoginPage.this);
+            progressDialog.setMessage("Loading...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            DocumentReference docRef = db.collection("users").document(currentUser.getUid());
+            docRef.get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d("myUserDocument", "" + document);
+                        String roll = document.getString("roll"); // Assuming you have a 'roll' field
+                        if ("Doctor".equals(roll)) {
+                            openDoctorsHomePage();
+                            progressDialog.dismiss();
+                        } else if ("Patient".equals(roll)) {
+                            openPatientHomePage();
+                            progressDialog.dismiss();
+                        }
+                    } else {
+                        Toast.makeText(LoginPage.this, "No such user",
+                                Toast.LENGTH_SHORT).show();
+                        progressDialog.dismiss();
+                    }
+                } else {
+                    Toast.makeText(LoginPage.this, "Error checking user roll",
+                            Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
+                }
+            });
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_page);
         Toast.makeText(this, "hi", Toast.LENGTH_SHORT).show();
@@ -42,7 +80,7 @@ public class LoginPage extends AppCompatActivity {
 
         setClickableSpan(createAccountTextView, "Create Account", new ClickableSpan() {
             @Override
-            public void onClick(View widget) {
+            public void onClick(@NonNull View widget) {
                 Toast.makeText(LoginPage.this, "Create Account Clicked", Toast.LENGTH_SHORT).show();
                 openSignUpPage();
             }
@@ -50,7 +88,7 @@ public class LoginPage extends AppCompatActivity {
 
         setClickableSpan(forgotPasswordTextView, "Forgot Password", new ClickableSpan() {
             @Override
-            public void onClick(View widget) {
+            public void onClick(@NonNull View widget) {
                 Toast.makeText(LoginPage.this, "Forgot Password Clicked", Toast.LENGTH_SHORT).show();
                 openForgotPassword();
             }
@@ -62,7 +100,7 @@ public class LoginPage extends AppCompatActivity {
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email = emailText.getText().toString().trim();
+                String email = Objects.requireNonNull(emailText.getText()).toString().trim();
                 String password = passText.getText().toString().trim();
                 if(email.isEmpty() || password.isEmpty()){
                     Toast.makeText(LoginPage.this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
@@ -150,6 +188,7 @@ public class LoginPage extends AppCompatActivity {
         try {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
+            assert user != null;
             FirebaseFirestore.getInstance().collection("users")
                     .document(user.getUid()).addSnapshotListener(
                             (snapshot, e) -> {
@@ -165,7 +204,7 @@ public class LoginPage extends AppCompatActivity {
                                 intent.putExtra("USER",userMetadata);
 
                                 startActivity(intent);
-
+                                finish();
 
                             }
                     );
@@ -178,6 +217,7 @@ public class LoginPage extends AppCompatActivity {
         try {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
+            assert user != null;
             FirebaseFirestore.getInstance().collection("users")
                     .document(user.getUid()).addSnapshotListener(
                             (snapshot, e) -> {
@@ -193,7 +233,7 @@ public class LoginPage extends AppCompatActivity {
                                 intent.putExtra("USER",userMetadata);
 
                                 startActivity(intent);
-
+                                finish();
 
                             }
                     );
