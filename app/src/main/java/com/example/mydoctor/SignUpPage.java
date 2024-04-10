@@ -208,10 +208,27 @@ public class SignUpPage extends AppCompatActivity {
                 String location = locationEditText.getText().toString().trim();
                 String password = passwordEditText.getText().toString().trim();
                 String confirmPassword = confirmPasswordEditText.getText().toString().trim();
+                String clinicsStr = clinics.toString().trim();
+                String citiesStr = cities.toString().trim();
+                String regionsStr = regions.toString().trim();
+
+                String selectedRole = spinner.getSelectedItem().toString();
+                if (!"Patient".equals(selectedRole) && (regions.getSelectedItemPosition() <= 0 ||
+                        cities.getSelectedItemPosition() <= 0 || clinics.getSelectedItemPosition() <= 0)) {
+                    Toast.makeText(SignUpPage.this, "Please select region, city, and clinic", Toast.LENGTH_SHORT).show();
+                    return; // Stop further execution if any region, city, or clinic is not selected
+                }
+
+                if (!"Patient".equals(selectedRole)&&(smallPhotoImageView.getDrawable() == null || extraImageView1.getDrawable() == null || extraImageView2.getDrawable() == null)) {
+                    Toast.makeText(SignUpPage.this, "Please attach a photo", Toast.LENGTH_SHORT).show();
+                    return; // Stop further execution if photo is not attached
+                }
 
                 // Check if any of the fields is empty
                 if (fullName.isEmpty() || email.isEmpty() || mobileNumber.isEmpty() ||
-                        location.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                        location.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() ||
+                        clinicsStr.isEmpty() || clinicsStr.equals("Choose Clinic") || citiesStr.isEmpty() ||
+                        citiesStr.equals("Choose City") || regionsStr.isEmpty() || regionsStr.equals("Choose Region")) {
                     Toast.makeText(SignUpPage.this, "Please fill out all the fields", Toast.LENGTH_SHORT).show();
                     return; // Stop further execution if any field is empty
                 }
@@ -229,9 +246,6 @@ public class SignUpPage extends AppCompatActivity {
 
 
                 // Additional validation checks if needed
-
-                String selectedRole = spinner.getSelectedItem().toString();
-
                 dialog.show();
 
                 // Check if the phone number is already in use
