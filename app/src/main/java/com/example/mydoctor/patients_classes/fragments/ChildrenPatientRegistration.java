@@ -215,7 +215,7 @@ public class ChildrenPatientRegistration extends Fragment {
                 String birthCertDetails = editTextBirthCertDetails.getText().toString().trim();
 
 
-                if (fullName.isEmpty() || location.isEmpty() || dob.isEmpty() || birthCertDetails.isEmpty()) {
+                if (fullName.isEmpty() || location.isEmpty() || dob.isEmpty() || birthCertDetails.isEmpty() || regions.getSelectedItemPosition() <= 0 || cities.getSelectedItemPosition() <= 0 || clinics.getSelectedItemPosition() <= 0 || doctors.getSelectedItemPosition() <= 0) {
                     Toast.makeText(getActivity(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
                 } else {
                     // Add spinner values as needed
@@ -250,6 +250,7 @@ public class ChildrenPatientRegistration extends Fragment {
         child.put("location", location);
         child.put("dob", dob);
         child.put("birthCertDetails", birthCertDetails);
+
 
         db.collection("users").document(currentUser.getUid()).collection("children").add(child)
                 .addOnSuccessListener(documentReference -> {
