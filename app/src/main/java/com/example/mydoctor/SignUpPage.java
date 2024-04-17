@@ -4,9 +4,11 @@ import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -25,6 +27,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.example.mydoctor.forgot_password_classes.ForgotPassword;
@@ -45,8 +48,10 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SignUpPage extends AppCompatActivity {
     public static final int PICK_IMAGE_REQUEST = 1;
@@ -63,7 +68,7 @@ public class SignUpPage extends AppCompatActivity {
     List<String> clinicIds = new ArrayList<>();
 
     ProgressDialog dialog;
-    Button signUpButton, attachPhotoBtn, extraButton1, extraButton2;
+    Button signUpButton, attachPhotoBtn, extraButton1, extraButton2, addTimeButton;
     Spinner spinner, regions, cities, clinics;
     ArrayList<String> spinnerArrList;
     ArrayAdapter<String> spinnerArrAdapter;
@@ -74,6 +79,8 @@ public class SignUpPage extends AppCompatActivity {
     List<String> cityNames;
     List<String> clinicsList = new ArrayList<>();
     ArrayAdapter<String> clinicsAdapter;
+    private LinearLayout timesLayout;
+    private ArrayList<String> timeSet = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +89,7 @@ public class SignUpPage extends AppCompatActivity {
 
         // Initialize views
         TextView alreadyUserTextView = findViewById(R.id.already_user);
+        timesLayout = findViewById(R.id.times_container);
         signUpButton = findViewById(R.id.signUpBtn);
         spinner = findViewById(R.id.spinner);
         regions = findViewById(R.id.regions);
@@ -97,6 +105,7 @@ public class SignUpPage extends AppCompatActivity {
         fullNameEditText = findViewById(R.id.fullName);
         emailEditText = findViewById(R.id.userEmailId);
         mobileNumberEditText = findViewById(R.id.mobileNumber);
+        addTimeButton = findViewById(R.id.buttonAddTimes);
         locationEditText = findViewById(R.id.location);
         passwordEditText = findViewById(R.id.password);
         confirmPasswordEditText = findViewById(R.id.confirmPassword);
@@ -211,6 +220,7 @@ public class SignUpPage extends AppCompatActivity {
                 String clinicsStr = clinics.toString().trim();
                 String citiesStr = cities.toString().trim();
                 String regionsStr = regions.toString().trim();
+                Toast.makeText(SignUpPage.this, ""+timeSet, Toast.LENGTH_SHORT).show();
 
                 String selectedRole = spinner.getSelectedItem().toString();
                 if (!"Patient".equals(selectedRole) && (regions.getSelectedItemPosition() <= 0 ||
@@ -221,6 +231,10 @@ public class SignUpPage extends AppCompatActivity {
 
                 if (!"Patient".equals(selectedRole)&&(smallPhotoImageView.getDrawable() == null || extraImageView1.getDrawable() == null || extraImageView2.getDrawable() == null)) {
                     Toast.makeText(SignUpPage.this, "Please attach a photo", Toast.LENGTH_SHORT).show();
+                    return; // Stop further execution if photo is not attached
+                }
+                if (!"Patient".equals(selectedRole) && timeSet == null) {
+                    Toast.makeText(SignUpPage.this, "Please choose a time", Toast.LENGTH_SHORT).show();
                     return; // Stop further execution if photo is not attached
                 }
 
@@ -276,13 +290,13 @@ public class SignUpPage extends AppCompatActivity {
                                     });
 
                                     // Assuming you create a User object to store in Firestore
-                                    User newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, null);
+                                    User newUser;
                                     if ("Doctor".equals(selectedRole)) {
-                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, selectedClinicId);
+                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, selectedClinicId,timeSet);
                                         // The rest of your registration process follows
                                     } else {
                                         // For other roles where clinicId is not required
-                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, null);
+                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, null,null);
                                         // The rest of your registration process follows
                                     }
 
@@ -308,6 +322,8 @@ public class SignUpPage extends AppCompatActivity {
 
                                                 // Clear images or reset to default if applicable
                                                 clearImages(smallPhotoImageView, extraImageView1, extraImageView2);
+
+                                                timesLayout.removeAllViews();
                                                 dialog.dismiss();
 
                                                 // Navigate to login page or show success message
@@ -340,6 +356,12 @@ public class SignUpPage extends AppCompatActivity {
                 });
             }
         });
+        addTimeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openTimePickerDialog();
+            }
+        });
 
         // Set up Additional Buttons
         extraButton1.setOnClickListener(new View.OnClickListener() {
@@ -370,7 +392,7 @@ public class SignUpPage extends AppCompatActivity {
                     cities.setVisibility(View.GONE);
                     clinics.setVisibility(View.GONE);
                     imageUri = null;
-                    setButtonVisibility(View.GONE, attachPhotoBtn, extraButton1, extraButton2);
+                    setButtonVisibility(View.GONE, attachPhotoBtn, extraButton1, extraButton2,addTimeButton);
                     setImageViewVisibility(View.GONE, smallPhotoImageView, extraImageView1, extraImageView2);
                     // Increase the top margin for the "Sign Up" button when buttons are gone
                     setSignUpButtonTopMargin(0);
@@ -378,7 +400,7 @@ public class SignUpPage extends AppCompatActivity {
                     regions.setVisibility(View.VISIBLE);
                     cities.setVisibility(View.VISIBLE);
                     clinics.setVisibility(View.VISIBLE);
-                    setButtonVisibility(View.VISIBLE, attachPhotoBtn, extraButton1, extraButton2);
+                    setButtonVisibility(View.VISIBLE, attachPhotoBtn, extraButton1, extraButton2,addTimeButton);
                     setImageViewVisibility(View.VISIBLE, smallPhotoImageView, extraImageView1, extraImageView2);
                     // Reset the top margin for the "Sign Up" button
                     setSignUpButtonTopMargin(32);
@@ -390,6 +412,58 @@ public class SignUpPage extends AppCompatActivity {
                 // Do nothing here
             }
         });
+    }
+    private void openTimePickerDialog() {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                String time = String.format("%02d:%02d", hourOfDay, minute);
+                if (timeSet.contains(time)) {
+                    // Time already exists, show a toast message
+                    Toast.makeText(SignUpPage.this, "This hour has already been chosen.", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Add the new time to the set and UI
+                    timeSet.add(time);
+                    addTimeEntry(time);
+                }
+            }
+        }, 12, 0, true);
+        timePickerDialog.show();
+    }
+    private void addTimeEntry(String time) {
+        // Create a new horizontal LinearLayout for each time entry
+        LinearLayout entryLayout = new LinearLayout(this);
+        entryLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        entryLayout.setOrientation(LinearLayout.HORIZONTAL);
+
+        // Create a TextView for the time
+        TextView textView = new TextView(this);
+        textView.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
+        textView.setText(time);
+
+        // Create a delete button with an X icon
+        ImageView deleteButton = new ImageView(this);
+        deleteButton.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        deleteButton.setImageDrawable(ContextCompat.getDrawable(this, android.R.drawable.ic_delete));
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Remove the time entry from the layout and the set
+                timesLayout.removeView(entryLayout);
+                timeSet.remove(time);
+            }
+        });
+
+        // Add the TextView and the delete button to the horizontal LinearLayout
+        entryLayout.addView(textView);
+        entryLayout.addView(deleteButton);
+
+        // Add the entry layout to the main times layout
+        timesLayout.addView(entryLayout);
     }
     private void loadCitiesForRegion(String regionId) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();

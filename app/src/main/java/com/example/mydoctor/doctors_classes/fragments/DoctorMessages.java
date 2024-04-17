@@ -136,7 +136,7 @@ public class DoctorMessages extends Fragment {
                                         if (documentSnapshot.exists()) {
                                             String documentId = documentSnapshot.getId();
                                             Map<String, Object> updates = new HashMap<>();
-                                            updates.put("status", "The doctor agreed for your child to become his patient");
+                                            updates.put("status", "added");
                                             updates.put("isShowed",false);
                                             db.collection("requests").document(documentId)
                                                     .update(updates)

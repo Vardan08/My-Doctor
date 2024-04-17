@@ -561,7 +561,7 @@ public class ChildrenPatientRegistration extends Fragment {
         if(status.equals("pending")){
             stausTextView.setText("Dr. Answer: " + status);
             stausTextView.setVisibility(View.VISIBLE);
-        } else if (status.equals("The doctor agreed for your child to become his patient") && !isShowed) {
+        } else if (status.equals("added") && !isShowed) {
             // Use AlertDialog.Builder to construct the dialog
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             // Set the title and message for the dialog
