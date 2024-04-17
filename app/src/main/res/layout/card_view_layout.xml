@@ -80,7 +80,7 @@
                     android:layout_below="@id/textViewDOB"
                     android:layout_centerHorizontal="true"
                     android:layout_marginTop="8dp"
-                    android:text="Doctor is:"
+                    android:text="birthCertDetails"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
                 <TextView

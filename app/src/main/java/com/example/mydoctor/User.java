@@ -3,6 +3,11 @@ package com.example.mydoctor;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+
 public class User implements Parcelable {
     private String fullName;
     private String email;
@@ -11,10 +16,11 @@ public class User implements Parcelable {
     private String password;
     private String roll;
     private String clinicId;
+    private ArrayList<String> timeSet;
 
     public User() {}
 
-    public User(String fullName, String email, String mobileNumber, String location, String password, String roll,String clinicId) {
+    public User(String fullName, String email, String mobileNumber, String location, String password, String roll, String clinicId, ArrayList<String> timeSet) {
         this.fullName = fullName;
         this.email = email;
         this.mobileNumber = mobileNumber;
@@ -22,7 +28,9 @@ public class User implements Parcelable {
         this.password = password;
         this.roll = roll;
         this.clinicId = clinicId;
+        this.timeSet = timeSet;
     }
+
     protected User(Parcel in) {
         fullName = in.readString();
         email = in.readString();
@@ -31,14 +39,8 @@ public class User implements Parcelable {
         password = in.readString();
         roll = in.readString();
         clinicId = in.readString();
-    }
-
-    public String getClinicId() {
-        return clinicId;
-    }
-
-    public void setClinicId(String clinicId) {
-        this.clinicId = clinicId;
+        List<String> tempList = in.createStringArrayList();
+        timeSet = in.createStringArrayList();
     }
 
     @Override
@@ -50,6 +52,7 @@ public class User implements Parcelable {
         dest.writeString(password);
         dest.writeString(roll);
         dest.writeString(clinicId);
+        dest.writeStringList(timeSet);
     }
 
     @Override
@@ -68,6 +71,15 @@ public class User implements Parcelable {
             return new User[size];
         }
     };
+
+    // Getters and setters for all fields including timeSet
+    public ArrayList<String> getTimeSet() {
+        return timeSet;
+    }
+
+    public void setTimeSet(ArrayList<String> timeSet) {
+        this.timeSet = timeSet;
+    }
 
     public String getFullName() {
         return fullName;
@@ -115,5 +127,13 @@ public class User implements Parcelable {
 
     public void setRoll(String roll) {
         this.roll = roll;
+    }
+
+    public String getClinicId() {
+        return clinicId;
+    }
+
+    public void setClinicId(String clinicId) {
+        this.clinicId = clinicId;
     }
 }
