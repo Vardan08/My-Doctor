@@ -101,7 +101,8 @@ public class TodayPatients extends Fragment {
     private void allPatients() {
         if (currentUser != null) {
             this.container.removeAllViews();  // Clear existing views to prevent duplication
-            db.collection("requests").whereEqualTo("doctorId", currentUser.getUid()).get()
+            db.collection("requests").whereEqualTo("doctorId", currentUser.getUid())
+                    .whereEqualTo("status","added").get()
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             patientSnapshots.clear(); // Clear existing patient snapshots
