@@ -1,7 +1,6 @@
 package com.example.mydoctor.patients_classes.fragments;
 
 import static com.example.mydoctor.SignUpPage.PICK_IMAGE_REQUEST;
-import static com.google.common.io.Files.getFileExtension;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -15,7 +14,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
@@ -36,7 +34,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
 import com.example.mydoctor.R;
-import com.example.mydoctor.User;
+import com.example.mydoctor.data_structures.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;

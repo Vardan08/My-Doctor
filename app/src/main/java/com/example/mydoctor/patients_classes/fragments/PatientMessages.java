@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.mydoctor.R;
-import com.example.mydoctor.User;
+import com.example.mydoctor.data_structures.User;
 
 
 public class PatientMessages extends Fragment {
