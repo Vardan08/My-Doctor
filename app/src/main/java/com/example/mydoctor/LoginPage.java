@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.mydoctor.data_structures.User;
 import com.example.mydoctor.doctors_classes.DoctorsHomePage;
 import com.example.mydoctor.forgot_password_classes.ForgotPassword;
 import com.example.mydoctor.patients_classes.PatientsHomePage;

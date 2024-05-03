@@ -43,6 +43,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage:20.3.0")
     implementation("com.google.firebase:firebase-auth:22.3.1")
     implementation("com.android.car.ui:car-ui-lib:2.6.0")
+    implementation("com.intuit.sdp:sdp-android:1.1.1")
     testImplementation("junit:junit:4.13.2")
     implementation("com.github.bumptech.glide:glide:4.12.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")

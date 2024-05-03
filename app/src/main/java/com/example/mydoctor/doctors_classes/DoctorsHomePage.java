@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.mydoctor.R;
-import com.example.mydoctor.User;
+import com.example.mydoctor.data_structures.User;
 import com.example.mydoctor.doctors_classes.fragments.DoctorMessages;
 import com.example.mydoctor.doctors_classes.fragments.Profile;
 import com.example.mydoctor.doctors_classes.fragments.TodayPatients;

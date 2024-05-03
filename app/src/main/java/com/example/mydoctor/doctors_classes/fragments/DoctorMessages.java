@@ -23,8 +23,9 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.mydoctor.R;
-import com.example.mydoctor.User;
-import com.example.mydoctor.patients_classes.fragments.PatientQuestionnaire;
+import com.example.mydoctor.data_structures.User;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -199,6 +200,24 @@ public class DoctorMessages extends Fragment {
                                     }
                                 })
                                 .addOnFailureListener(e -> Log.w("QueryError", "Error getting documents: ", e));
+                        db.collection("users").whereEqualTo("roll","Patient").get()
+                                .addOnSuccessListener(queryDocumentSnapshots -> {
+                                    for(QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
+                                        String patientId = documentSnapshot.getId();
+                                        db.collection("users").document(patientId).collection("children").document(child.getId())
+                                                .delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void unused) {
+                                                        Toast.makeText(getActivity(), "Document successfully deleted!", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }).addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        Toast.makeText(getActivity(), "Error deleting document", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                    }
+                                });
                     }
                 });
 

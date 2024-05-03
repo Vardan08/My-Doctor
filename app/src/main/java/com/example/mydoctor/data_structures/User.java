@@ -1,12 +1,10 @@
-package com.example.mydoctor;
+package com.example.mydoctor.data_structures;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
 
 public class User implements Parcelable {
     private String fullName;

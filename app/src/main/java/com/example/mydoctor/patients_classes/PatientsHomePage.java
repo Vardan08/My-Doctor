@@ -10,7 +10,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.example.mydoctor.R;
-import com.example.mydoctor.User;
+import com.example.mydoctor.data_structures.User;
 import com.example.mydoctor.patients_classes.fragments.AddVisit;
 import com.example.mydoctor.patients_classes.fragments.ChildrenPatientRegistration;
 import com.example.mydoctor.patients_classes.fragments.PatientMessages;
