@@ -146,10 +146,45 @@ public class DoctorMessages extends Fragment {
                                                         Log.d("UpdateStatus", "DocumentSnapshot successfully updated!");
                                                     })
                                                     .addOnFailureListener(e -> Log.w("UpdateStatus", "Error updating document", e));
+                                            String[] vaccines = {
+                                                    "ԲՑԺ (ծնվելուց հետո 24-48 ժամվա ընթացքում)",
+                                                    "ՎՀԲ (ծնվելուց հետո 24 ժամվա ընթացքում)",
+                                                    "ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (6 շաբաթ)",
+                                                    "ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (10 շաբաթ)",
+                                                    "ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (14 շաբաթ)",
+                                                    "ԿԿԽ (12 ամսական)",
+                                                    "ԱԿԴՓ, ՕՊՎ (18 ամսական)",
+                                                    "ԱԴՓ-Մ (6 տարեկան)",
+                                                    "ՕՊՎ (6 տարեկան)",
+                                                    "ԿԿԽ (6 տարեկան)",
+                                                    "ԱԴՓ-Մ (16 տարեկան)",
+                                                    "ԱԴՓ-Մ (26 տարեկան)",
+                                                    "ԱԴՓ-Մ (36 տարեկան)",
+                                                    "ԱԴՓ-Մ (46 տարեկան)",
+                                                    "ԱԴՓ-Մ (56 տարեկան)"
+                                            };
+                                            for(String vaccine : vaccines){
+                                                Map<String, Object> vaccineData = new HashMap<>();
+                                                vaccineData.put("vaccine",vaccine);
+                                                vaccineData.put("status",false);
+                                                db.collection("users").whereEqualTo("roll","Patient").get()
+                                                        .addOnSuccessListener(queryDocumentSnapshots1 -> {
+                                                            for(QueryDocumentSnapshot documentSnapshot2 : queryDocumentSnapshots1){
+                                                                String patientId = documentSnapshot2.getId();
+                                                                db.collection("users").document(patientId)
+                                                                        .collection("children").document(child.getId())
+                                                                        .collection("vaccines").add(vaccineData)
+                                                                        .addOnSuccessListener(queryDocumentSnapshots2 -> {
+                                                                            Toast.makeText(getActivity(), "array successfully added", Toast.LENGTH_SHORT).show();
+                                                                        });
+                                                            }
+                                                        });
+                                            }
                                         }
                                     }
                                 })
                                 .addOnFailureListener(e -> Log.w("QueryError", "Error getting documents: ", e));
+
                     }
                 });
 
@@ -239,7 +274,7 @@ public class DoctorMessages extends Fragment {
             @Override
             public void onClick(View v) {
                 PatientData anotherFragment = new PatientData();
-                anotherFragment.setPatientChildData(user,patientId);
+                anotherFragment.setPatientChildData(user,patientId,child.getId());
                 FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);

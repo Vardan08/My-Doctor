@@ -22,81 +22,51 @@
 
     </LinearLayout>
 
-    <TableLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:stretchColumns="*"
+        android:layout_height="match_parent"
         android:layout_marginTop="50dp">
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <!-- Header Row -->
             <TextView
-                android:layout_width="94dp"
+                android:id="@+id/vaccinesTextView"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:text="Name of the vaccine"
-                android:textStyle="bold" />
+                android:layout_marginTop="8dp"
+                android:text="Vaccines"
+                android:layout_gravity="center"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:padding="16dp" />
 
-            <TextView
-                android:layout_width="76dp"
-                android:layout_height="match_parent"
-                android:inputType="textMultiLine"
-                android:padding="8dp"
-                android:text="Number of vaccinations"
-
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:padding="8dp"
-                android:text="Vaccination period"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="103dp"
-                android:layout_height="match_parent"
-                android:padding="8dp"
-                android:text="received/don't receive"
-                android:textStyle="bold" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:padding="8dp"
-                android:text="ԲՑԺ" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:padding="8dp"
-                android:text="1" />
-
-            <TextView
-                android:layout_width="135dp"
+            <TableLayout
+                android:id="@+id/tableLayout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:text="24-48 after birth within the hour" />
-
+                android:stretchColumns="*">
+                <!-- Table rows can be added here -->
+            </TableLayout>
             <TextView
-                android:id="@+id/receiving"
-                android:layout_width="63dp"
-                android:layout_height="39dp"
-                android:text="@string/receive"/>
-
-        </TableRow>
-
-
-    </TableLayout>
-
-
-
+                android:id="@+id/visits"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Visits"
+                android:layout_gravity="center"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:padding="16dp" />
+            <LinearLayout
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!-- CardViews will be added here -->
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </FrameLayout>

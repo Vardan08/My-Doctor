@@ -1,17 +1,24 @@
 package com.example.mydoctor.doctors_classes.fragments;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+
+import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
@@ -30,6 +37,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -179,7 +187,8 @@ public class TodayPatients extends Fragment {
                                 String date = document.getString("date");
                                 String selectedTime = document.getString("selectedTime");
                                 String userInput = document.getString("userInput");
-                                fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput);
+                                String meet = document.getString("meet");
+                                fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput,meet);
                             }
                         }else{
                             Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
@@ -199,7 +208,8 @@ public class TodayPatients extends Fragment {
                                 String childId = document.getString("selectedChildId");
                                 String selectedTime = document.getString("selectedTime");
                                 String userInput = document.getString("userInput");
-                                fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput);
+                                String meet = document.getString("meet");
+                                fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput,meet);
                             }
                         }else{
                             Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
@@ -207,7 +217,7 @@ public class TodayPatients extends Fragment {
                     });
         }
     }
-    private void fetchChildrenAndAddVisitCard(String childId, String date, String selectedTime, String userInput){
+    private void fetchChildrenAndAddVisitCard(String childId, String date, String selectedTime, String userInput, String meet){
         db.collection("users").whereEqualTo("roll", "Patient").get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
@@ -217,35 +227,111 @@ public class TodayPatients extends Fragment {
                                     if (documentSnapshot2.exists()) {
                                         patientSnapshots.add(documentSnapshot2);
                                         assert currentUser != null;
-                                        addVisitCard(documentSnapshot2,childId,date,currentUser.getUid(),selectedTime,userInput,patientId);
+                                        addVisitCard(documentSnapshot2,childId,date,currentUser.getUid(),selectedTime,userInput,patientId,meet);
                                     }
                                 });
                     }
                 });
     }
-    private void addVisitCard(DocumentSnapshot child, String selectedChildId, String date, String doctorId, String selectedTime, String userInput,String patientId){
+    @SuppressLint("SetTextI18n")
+    private void addVisitCard(DocumentSnapshot child, String selectedChildId, String date, String doctorId, String selectedTime, String userInput, String patientId, String meet){
         LayoutInflater inflater = LayoutInflater.from(getActivity());
-        View cardView = inflater.inflate(R.layout.visit_card_view_layout, this.container, false);
+        View cardView = inflater.inflate(R.layout.card_view_layout, this.container, false);
         Map<String, Object> user = child.getData();
         assert currentUser != null;
-        TextView cildFullNameTextView = cardView.findViewById(R.id.fullNameTextView2);
+        TextView cildFullNameTextView = cardView.findViewById(R.id.textViewFullName);
+        TextView weMet = cardView.findViewById(R.id.status);
+        weMet.setVisibility(View.VISIBLE);
+        weMet.setText(meet);
         assert user != null;
         cildFullNameTextView.setText((String) user.get("fullName"));
-        TextView selectedTimeTextView = cardView.findViewById(R.id.timeTextView);
+        TextView selectedTimeTextView = cardView.findViewById(R.id.textViewLocation);
         selectedTimeTextView.setText(selectedTime);
-        TextView dateTextView = cardView.findViewById(R.id.calendarTextView);
+        TextView dateTextView = cardView.findViewById(R.id.textViewDOB);
         dateTextView.setText(date);
-        TextView description = cardView.findViewById(R.id.description);
+        TextView description = cardView.findViewById(R.id.textViewDoctor);
         description.setText(userInput);
-        TextView cansel = cardView.findViewById(R.id.cancel);
-        cansel.setVisibility(View.GONE);
+        TextView weMeet = cardView.findViewById(R.id.textViewCancel);
+
+        weMeet.setText("We meet");
+        weMeet.setVisibility(View.VISIBLE);
+        if(meet.equals("We met")){
+            weMeet.setVisibility(View.GONE);
+        }
+        weMeet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Create an AlertDialog builder
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+                // Set title for the dialog
+                builder.setTitle("Meeting Description");
+
+                // Create an EditText to allow user input
+                final EditText input = new EditText(getActivity());
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(input);
+
+                // Set positive button for the dialog
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Retrieve the entered description
+                        String description = input.getText().toString().trim();
+                        if(description.isEmpty()){
+                            Toast.makeText(getActivity(), "Pleas write description", Toast.LENGTH_SHORT).show();
+                        }else {
+                            Map<String,Object> meetData = new HashMap<>();
+                            meetData.put("date",date);
+                            meetData.put("description",description);
+                            meetData.put("selectedTime",selectedTime);
+                            db.collection("users")
+                                    .document(patientId)
+                                    .collection("children")
+                                    .document(child.getId())
+                                    .collection("meetings")
+                                    .add(meetData).addOnSuccessListener(documentReference -> {
+                                        Toast.makeText(getActivity(), "you meet patient successfully", Toast.LENGTH_SHORT).show();
+                                    });
+                            db.collection("visits")
+                                    .whereEqualTo("selectedChildId",child.getId())
+                                    .whereEqualTo("date",date)
+                                    .get().addOnCompleteListener(task -> {
+                                        if(task.isSuccessful()){
+                                            for(QueryDocumentSnapshot documentSnapshot : task.getResult()){
+                                                db.collection("visits").document(documentSnapshot.getId()).update("meet","We met")
+                                                        .addOnSuccessListener(aVoid -> {
+                                                            Log.d("UpdateSuccess", "Document successfully updated");
+                                                            weMet.setText("We met");
+                                                            weMeet.setVisibility(View.GONE);
+                                                        }).addOnFailureListener(e -> Log.w("UpdateFailure", "Error updating document", e));
+                                            }
+                                        }
+                                    });
+
+                        }
+                    }
+                });
+
+                // Set negative button for the dialog
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel(); // Close the dialog
+                    }
+                });
+
+                // Show the dialog
+                builder.show();
+            }
+        });
         if (user.containsKey("imageUri")) {
-            Glide.with(this).load((String) user.get("imageUri")).into((ImageView) cardView.findViewById(R.id.imageView2));
+            Glide.with(this).load((String) user.get("imageUri")).into((ImageView) cardView.findViewById(R.id.imageViewChild));
         }
         this.container.addView(cardView);
         cardView.setOnClickListener(v -> {
             PatientData anotherFragment = new PatientData();
-            anotherFragment.setPatientChildData(user, patientId);
+            anotherFragment.setPatientChildData(user, patientId,child.getId());
             FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
@@ -304,7 +390,7 @@ public class TodayPatients extends Fragment {
         this.container.addView(cardView);
         cardView.setOnClickListener(v -> {
             PatientData anotherFragment = new PatientData();
-            anotherFragment.setPatientChildData(user, patientId);
+            anotherFragment.setPatientChildData(user, patientId, child.getId());
             FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
@@ -336,8 +422,9 @@ public class TodayPatients extends Fragment {
                                 String date = document.getString("date");
                                 String selectedTime = document.getString("selectedTime");
                                 String userInput = document.getString("userInput");
+                                String meet = document.getString("meet");
                                 if(fullName != null && fullName.toLowerCase().contains(text.toLowerCase())){
-                                    fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput);
+                                    fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput,meet);
                                 }
 
                             }

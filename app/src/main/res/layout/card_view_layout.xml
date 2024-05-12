@@ -12,89 +12,106 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:padding="16dp">
 
-        <ImageView
-            android:id="@+id/imageViewChild"
-            android:layout_width="110dp"
-            android:layout_height="110dp"
-            android:src="@drawable/user"
-            android:scaleType="centerCrop"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="16dp"
-            android:adjustViewBounds="true"
-            android:clipToOutline="true"
-            android:background="@android:color/transparent"
-            android:elevation="4dp"/>
-
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/linear_layout_card"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true">
+            android:orientation="horizontal">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/imageViewChild"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:src="@drawable/user"
+                android:scaleType="centerCrop"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="16dp"
+                android:adjustViewBounds="true"
+                android:clipToOutline="true"
+                android:background="@android:color/transparent"
+                android:elevation="4dp"/>
 
-                <TextView
-                    android:id="@+id/textViewFullName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_alignParentTop="true"
-                    android:text="Full Name"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/linear_layout_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="true">
 
-                <TextView
-                    android:id="@+id/textViewLocation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/textViewFullName"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="8dp"
-                    android:text="Location"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-                <!-- New TextView for "DOB" -->
-                <TextView
-                    android:id="@+id/textViewDOB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/textViewLocation"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="8dp"
-                    android:text="DOB: YYYY-MM-DD"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                    <TextView
+                        android:id="@+id/textViewFullName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_alignParentTop="true"
+                        android:text="Full Name"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
-                <TextView
-                    android:id="@+id/textViewDoctor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/textViewDOB"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="8dp"
-                    android:text="birthCertDetails"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                    <TextView
+                        android:id="@+id/textViewLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/textViewFullName"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="8dp"
+                        android:text="Location"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
-                <TextView
-                    android:id="@+id/status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/textViewDoctor"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="8dp"
-                    android:visibility="gone"
-                    android:text="Status:"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                    <TextView
+                        android:id="@+id/textViewDOB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/textViewLocation"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="8dp"
+                        android:text="DOB: YYYY-MM-DD"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
-            </RelativeLayout>
-        </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:id="@+id/textViewDoctor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/textViewDOB"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="8dp"
+                        android:text="birthCertDetails"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+
+                    <TextView
+                        android:id="@+id/status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/textViewDoctor"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone"
+                        android:text="Status:"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- TextView for "Cancel" -->
+        <TextView
+            android:id="@+id/textViewCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textColor="@color/red"
+            android:visibility="gone"
+            android:gravity="end"
+            android:layout_gravity="end|bottom"
+            android:layout_marginTop="8dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>
