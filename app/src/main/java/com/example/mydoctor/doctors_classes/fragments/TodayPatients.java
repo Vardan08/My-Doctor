@@ -32,15 +32,18 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class TodayPatients extends Fragment {
 
@@ -87,6 +90,7 @@ public class TodayPatients extends Fragment {
         this.container.removeAllViews();  // Clear all views whenever view is created
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (parent.getItemAtPosition(position).toString().equals("All Patients")) {
@@ -174,28 +178,41 @@ public class TodayPatients extends Fragment {
 
         return view;
     }
-    private void visits(){
-        if(currentUser != null){
+    private void visits() {
+        if (currentUser != null) {
             this.container.removeAllViews();
-            db.collection("visits").whereEqualTo("doctorId",currentUser.getUid())
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            df.setTimeZone(TimeZone.getDefault()); // Consider the user's time zone
+            String todayString = df.format(new Date());
+
+            Toast.makeText(getContext(), "Fetching visits for today and future: " + todayString, Toast.LENGTH_SHORT).show();
+
+            db.collection("visits")
+                    .whereEqualTo("doctorId", currentUser.getUid())
+                    .whereGreaterThanOrEqualTo("date", todayString) // Filter to include today and future dates
+                    .orderBy("date") // Order the results by date
                     .get()
                     .addOnCompleteListener(task -> {
-                        if(task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             patientSnapshots.clear();
-                            for(QueryDocumentSnapshot document : task.getResult()){
+                            for (QueryDocumentSnapshot document : task.getResult()) {
                                 String childId = document.getString("selectedChildId");
                                 String date = document.getString("date");
                                 String selectedTime = document.getString("selectedTime");
                                 String userInput = document.getString("userInput");
                                 String meet = document.getString("meet");
-                                fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput,meet);
+                                fetchChildrenAndAddVisitCard(childId, date, selectedTime, userInput, meet);
                             }
-                        }else{
+                        } else {
+                            Log.e("VisitsActivity", "Failed to load visits", task.getException());
                             Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
                         }
                     });
+        } else {
+            Toast.makeText(getContext(), "No user logged in", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void visits(String date){
         if(currentUser != null){
             this.container.removeAllViews();

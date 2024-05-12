@@ -33,10 +33,12 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AddVisit extends Fragment {
@@ -354,6 +356,9 @@ public class AddVisit extends Fragment {
     }
 
     private void fetchVisitsAndDisplay() {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        df.setTimeZone(TimeZone.getDefault()); // Consider the user's time zone
+        String todayString = df.format(new Date());
         db.collection("users").document(currentUser.getUid()).collection("children")
                 .get()
                 .addOnCompleteListener(task -> {
@@ -363,7 +368,11 @@ public class AddVisit extends Fragment {
                             String childName = document.getString("fullName");
                             String childImageUrl = document.getString("imageUri");
                             if(childName != null && childId != null) {
-                                db.collection("visits").whereEqualTo("selectedChildId", childId).get()
+                                db.collection("visits")
+                                        .whereEqualTo("selectedChildId", childId)
+                                        .whereGreaterThanOrEqualTo("date", todayString) // Filter to include today and future dates
+                                        .orderBy("date") // Order the results by date
+                                        .get()
                                         .addOnCompleteListener(task1 -> {
                                             if(task1.isSuccessful()) {
                                                 LocalDate today = LocalDate.now();
@@ -382,6 +391,9 @@ public class AddVisit extends Fragment {
                                                         }
                                                     }
                                                 }
+                                            }else {
+                                                Log.e("VisitsActivity", "Failed to load visits", task1.getException());
+                                                Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
                                             }
                                         });
                             }
