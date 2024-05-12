@@ -633,7 +633,7 @@ public class ChildrenPatientRegistration extends Fragment {
             // This is handled by not propagating the click event from the ImageView to the CardView
             if(!(status.equals("pending"))){
                 PatientQuestionnaire anotherFragment = new PatientQuestionnaire();
-                anotherFragment.setChildName(fullName); // Consider passing doctorFullName too if needed in the fragment
+                anotherFragment.setChildId(child.getId()); // Consider passing doctorFullName too if needed in the fragment
 
                 FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();

@@ -332,6 +332,7 @@ public class AddVisit extends Fragment {
         visitData.put("doctorId",doctorId);
         visitData.put("selectedTime",selectedTime);
         visitData.put("userInput",userInput);
+        visitData.put("meet", "We haven't met");
         db.collection("visits")
                 .add(visitData)
                 .addOnSuccessListener(documentReference -> {
@@ -341,7 +342,7 @@ public class AddVisit extends Fragment {
                             .addOnSuccessListener(documentSnapshot -> {
                                 String childFullName = (String) documentSnapshot.get("fullName");
                                 String childImageUrl = documentSnapshot.getString("imageUri");
-                                addVisitCard(childFullName,selectedChildId,date,doctorId,selectedTime,userInput,documentReference.getId(),childImageUrl);
+                                addVisitCard(childFullName,selectedChildId,date,doctorId,selectedTime,userInput,documentReference.getId(),childImageUrl,"We haven't met");
                             }).addOnFailureListener(e -> {
                                 Toast.makeText(getActivity(), "Error get document" + e, Toast.LENGTH_SHORT).show();
                             });
@@ -376,7 +377,8 @@ public class AddVisit extends Fragment {
                                                             String doctorId = document1.getString("doctorId");
                                                             String selectedTime = document1.getString("selectedTime");
                                                             String userInput = document1.getString("userInput");
-                                                            addVisitCard(childName, childId, dateStr, doctorId, selectedTime, userInput, document1.getId(), childImageUrl);
+                                                            String meet = document1.getString("meet");
+                                                            addVisitCard(childName, childId, dateStr, doctorId, selectedTime, userInput, document1.getId(), childImageUrl,meet);
                                                         }
                                                     }
                                                 }
@@ -388,27 +390,34 @@ public class AddVisit extends Fragment {
                 });
     }
 
-    private void addVisitCard(String childFullName, String selectedChildId, String date, String doctorId, String selectedTime, String userInput, String visitDocumentId,String childImageUrl){
+    private void addVisitCard(String childFullName, String selectedChildId, String date, String doctorId, String selectedTime, String userInput, String visitDocumentId,String childImageUrl, String meet){
         LayoutInflater inflater = LayoutInflater.from(getActivity());
-        View cardView = inflater.inflate(R.layout.visit_card_view_layout, this.container, false);
+        View cardView = inflater.inflate(R.layout.card_view_layout , this.container, false);
         assert currentUser != null;
-        TextView cildFullNameTextView = cardView.findViewById(R.id.fullNameTextView2);
+        TextView cildFullNameTextView = cardView.findViewById(R.id.textViewFullName);
+        TextView weMet = cardView.findViewById(R.id.status);
+        weMet.setVisibility(View.VISIBLE);
+        weMet.setText(meet);
         cildFullNameTextView.setText(childFullName);
-        ImageView childImageView = cardView.findViewById(R.id.imageView2);
+        ImageView childImageView = cardView.findViewById(R.id.imageViewChild);
         if(childImageUrl != null){
             Glide.with(getActivity())
                     .load(childImageUrl)
                     .into(childImageView);
         }
-        TextView selectedTimeTextView = cardView.findViewById(R.id.timeTextView);
+        TextView selectedTimeTextView = cardView.findViewById(R.id.textViewLocation);
         selectedTimeTextView.setText(selectedTime);
-        TextView dateTextView = cardView.findViewById(R.id.calendarTextView);
+        TextView dateTextView = cardView.findViewById(R.id.textViewDOB);
         dateTextView.setText(date);
-        TextView description = cardView.findViewById(R.id.description);
+        TextView description = cardView.findViewById(R.id.textViewDoctor);
         description.setText(userInput);
         this.container.addView(cardView);
 
-        TextView cancel = cardView.findViewById(R.id.cancel);
+        TextView cancel = cardView.findViewById(R.id.textViewCancel);
+        cancel.setVisibility(View.VISIBLE);
+        if(meet.equals("We met")){
+            cancel.setVisibility(View.GONE);
+        }
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

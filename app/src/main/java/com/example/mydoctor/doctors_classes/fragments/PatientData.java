@@ -4,6 +4,8 @@ import android.app.ProgressDialog;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,13 +29,15 @@ public class PatientData extends Fragment {
     ImageView childImage;
     Map<String,Object> patientChildData;
     Map<String,Object> parentData;
+    String childId;
     String parentId;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-    public void setPatientChildData(Map<String,Object> patientChildData,String parentId) {
+    public void setPatientChildData(Map<String,Object> patientChildData,String parentId, String childId) {
         this.patientChildData = patientChildData;
         this.parentId = parentId;
+        this.childId = childId;
     }
 
 
@@ -47,6 +51,20 @@ public class PatientData extends Fragment {
         progressDialog.setCancelable(false);
         progressDialog.setMessage("Loading child data...");
         progressDialog.show();
+        TextView patientQuestionnaire = view.findViewById(R.id.patientQuestionnaire);
+        patientQuestionnaire.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DoctorQuestionnaire anotherFragment = new DoctorQuestionnaire();
+                anotherFragment.setChildIdAndPatientId(childId,parentId);
+                FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
+                fragmentTransaction.addToBackStack(null);
+
+                fragmentTransaction.commit();
+            }
+        });
         nameBelowPhoto = view.findViewById(R.id.textView3);
         fullNameTextView = view.findViewById(R.id.textName);
         dobTextView = view.findViewById(R.id.textDob);

@@ -12,7 +12,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/patient"
         android:layout_width="match_parent"
-        android:layout_height="151dp">
+        android:layout_height="wrap_content">
 
         <ImageView
             android:id="@+id/imageView2"
@@ -42,9 +42,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="300dp"
-            android:layout_marginTop="116dp"
-            android:text="Cansel"
+            android:layout_marginTop="128dp"
             android:clickable="true"
+            android:text="Cancel"
             android:textColor="@color/red"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -53,10 +53,20 @@
             android:id="@+id/timeTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginBottom="44dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="12dp"
             android:text="00:00"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/weMet"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/weMet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="New Text"
+            app:layout_constraintBottom_toTopOf="@+id/fullNameTextView2"
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
@@ -64,10 +74,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginBottom="16dp"
             android:text="Full Name"
             android:textSize="16dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/weMet"
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
