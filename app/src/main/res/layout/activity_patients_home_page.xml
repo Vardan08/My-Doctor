@@ -24,24 +24,16 @@
             android:id="@+id/todayPatients"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
+            android:layout_marginEnd="60dp"
             android:clickable="true"
             app:srcCompat="@drawable/home_page" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/messages"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:clickable="true"
-            app:srcCompat="@android:drawable/ic_dialog_email" />
 
         <!-- Новая кнопка добавлена здесь -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/questionnaireButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
+            android:layout_marginEnd="60dp"
             android:clickable="true"
             app:srcCompat="@drawable/questionnaire_icon_3"/>
 

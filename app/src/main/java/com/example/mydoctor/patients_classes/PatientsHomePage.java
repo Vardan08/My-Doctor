@@ -5,9 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
 
 import android.os.Bundle;
 import android.view.View;
@@ -16,17 +13,13 @@ import com.example.mydoctor.R;
 import com.example.mydoctor.data_structures.User;
 import com.example.mydoctor.patients_classes.fragments.AddVisit;
 import com.example.mydoctor.patients_classes.fragments.ChildrenPatientRegistration;
-import com.example.mydoctor.patients_classes.fragments.PatientMessages;
 import com.example.mydoctor.patients_classes.fragments.PatientsProfile;
-import com.example.mydoctor.workers.VaccinationReminderWorker;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.util.concurrent.TimeUnit;
-
 public class PatientsHomePage extends AppCompatActivity {
-    private FloatingActionButton todayPatientsButton, messagesButton, profileButton, questionnaireButton;
+    private FloatingActionButton todayPatientsButton, profileButton, questionnaireButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -35,7 +28,6 @@ public class PatientsHomePage extends AppCompatActivity {
         setContentView(R.layout.activity_patients_home_page);
         User user = getIntent().getParcelableExtra("USER");
         todayPatientsButton = findViewById(R.id.todayPatients);
-        messagesButton = findViewById(R.id.messages);
         profileButton = findViewById(R.id.profile);
         questionnaireButton = findViewById(R.id.questionnaireButton);
 
@@ -57,14 +49,6 @@ public class PatientsHomePage extends AppCompatActivity {
                 setNewFragment(addVisit,user);
             }
         });
-        messagesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                PatientMessages messages = new PatientMessages();
-                setNewFragment(messages,user);
-            }
-        });
-
         questionnaireButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
