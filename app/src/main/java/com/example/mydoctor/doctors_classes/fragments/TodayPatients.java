@@ -10,6 +10,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,6 +47,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.CountDownLatch;
 
 public class TodayPatients extends Fragment {
 
@@ -266,7 +269,7 @@ public class TodayPatients extends Fragment {
                     }
                 });
     }
-    private void fetchChildrenAndAddVisitCard(String childId, String date, String selectedTime, String userInput, String meet, String doctorId) {
+    private void fetchChildrenAndAddVisitCardOther(String childId, String date, String selectedTime, String userInput, String meet) {
         db.collection("users")
                 .whereEqualTo("roll", "Patient")
                 .get()
@@ -280,7 +283,8 @@ public class TodayPatients extends Fragment {
                                 .get()
                                 .addOnSuccessListener(documentSnapshot2 -> {
                                     if (documentSnapshot2.exists()) {
-                                        addVisitCard(documentSnapshot2, childId, date, doctorId, selectedTime, userInput, patientId, meet);
+                                        assert currentUser != null;
+                                        addVisitCard(documentSnapshot2, childId, date, currentUser.getUid(), selectedTime, userInput, patientId, meet);
                                     }
                                 });
                     }
@@ -470,34 +474,64 @@ public class TodayPatients extends Fragment {
 
         Set<DocumentSnapshot> filteredVisitsSet = new HashSet<>();
 
+        // Filter the patientSnapshots first
+        List<DocumentSnapshot> filteredPatientSnapshots = new ArrayList<>();
         for (DocumentSnapshot patientSnapshot : patientSnapshots) {
             String fullName = patientSnapshot.getString("fullName");
+            if (fullName != null && fullName.toLowerCase().contains(text.toLowerCase())) {
+                filteredPatientSnapshots.add(patientSnapshot);
+            }
+        }
+
+        // Use CountDownLatch to wait for all tasks to complete
+        CountDownLatch latch = new CountDownLatch(filteredPatientSnapshots.size());
+
+        for (DocumentSnapshot patientSnapshot : filteredPatientSnapshots) {
             String doctorId = patientSnapshot.getString("Doctor");
             String childId = patientSnapshot.getId();
-            if (fullName != null && fullName.toLowerCase().contains(text.toLowerCase())) {
-                db.collection("visits")
-                        .whereEqualTo("selectedChildId", childId)
-                        .get()
-                        .addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    filteredVisitsSet.add(document);
-                                }
-                                // Call to update UI after filtering only when all queries are done
-                                if (!task.getResult().isEmpty()) {
-                                    paintSearchedCards(filteredVisitsSet, doctorId);
-                                }
-                            } else {
-                                Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
+            db.collection("visits")
+                    .whereEqualTo("selectedChildId", childId)
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                filteredVisitsSet.add(document);
                             }
-                        });
+                        } else {
+                            Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
+                        }
+                        latch.countDown(); // Decrement the latch count
+                    });
+        }
+
+        new Thread(() -> {
+            try {
+                latch.await(); // Wait for all tasks to complete
+                // Update the UI on the main thread
+                runOnUiThread(() -> {
+                    if (!filteredVisitsSet.isEmpty()) {
+                        // Assuming doctorId can be obtained in some way to pass it to the method
+                        paintSearchedCards(filteredVisitsSet); // You might need to adjust how you pass doctorId
+                    }
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+        }).start();
+    }
+
+    private void runOnUiThread(Runnable action) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            action.run();
+        } else {
+            new Handler(Looper.getMainLooper()).post(action);
         }
     }
 
 
+
     // TODO create function to paint searched cards
-    private void paintSearchedCards(Set<DocumentSnapshot> filteredVisitsSet, String doctorId) {
+    private void paintSearchedCards(Set<DocumentSnapshot> filteredVisitsSet) {
         this.container.removeAllViews(); // Clear the container only once before adding new cards
         for (DocumentSnapshot documentSnapshot : filteredVisitsSet) {
             String childId = documentSnapshot.getString("selectedChildId");
@@ -506,7 +540,7 @@ public class TodayPatients extends Fragment {
             String userInput = documentSnapshot.getString("userInput");
             String meet = documentSnapshot.getString("meet");
 
-            fetchChildrenAndAddVisitCard(childId, date, selectedTime, userInput, meet, doctorId);
+            fetchChildrenAndAddVisitCardOther(childId, date, selectedTime, userInput, meet);
         }
     }
 
