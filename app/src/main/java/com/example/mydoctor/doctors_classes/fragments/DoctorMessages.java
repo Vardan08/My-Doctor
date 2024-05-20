@@ -146,30 +146,39 @@ public class DoctorMessages extends Fragment {
                                                         Log.d("UpdateStatus", "DocumentSnapshot successfully updated!");
                                                     })
                                                     .addOnFailureListener(e -> Log.w("UpdateStatus", "Error updating document", e));
-                                            String[] vaccines = {
-                                                    "ԲՑԺ (ծնվելուց հետո 24-48 ժամվա ընթացքում)",
-                                                    "ՎՀԲ (ծնվելուց հետո 24 ժամվա ընթացքում)",
-                                                    "ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (6 շաբաթ)",
-                                                    "ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (10 շաբաթ)",
-                                                    "ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (14 շաբաթ)",
-                                                    "ԿԿԽ (12 ամսական)",
-                                                    "ԱԿԴՓ, ՕՊՎ (18 ամսական)",
-                                                    "ԱԴՓ-Մ (6 տարեկան)",
-                                                    "ՕՊՎ (6 տարեկան)",
-                                                    "ԿԿԽ (6 տարեկան)",
-                                                    "ԱԴՓ-Մ (16 տարեկան)",
-                                                    "ԱԴՓ-Մ (26 տարեկան)",
-                                                    "ԱԴՓ-Մ (36 տարեկան)",
-                                                    "ԱԴՓ-Մ (46 տարեկան)",
-                                                    "ԱԴՓ-Մ (56 տարեկան)"
+                                            String[][] vaccines = {
+                                                    {"ԲՑԺ (ծնվելուց հետո 24-48 ժամվա ընթացքում)", "0"},
+                                                    {"ՎՀԲ (ծնվելուց հետո 24 ժամվա ընթացքում)", "0"},
+                                                    {"ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (6 շաբաթ)", "1.5"},
+                                                    {"ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (10 շաբաթ)", "2.5"},
+                                                    {"ԱԿԴՓ/ՎՀԲ/ՀԻԲ ՕՊՎ (14 շաբաթ)", "3.5"},
+                                                    {"ԿԿԽ (12 ամսական)", "12"},
+                                                    {"ԱԿԴՓ, ՕՊՎ (18 ամսական)", "18"},
+                                                    {"ԱԴՓ-Մ (6 տարեկան)", "72"},
+                                                    {"ՕՊՎ (6 տարեկան)", "72"},
+                                                    {"ԿԿԽ (6 տարեկան)", "72"},
+                                                    {"ԱԴՓ-Մ (16 տարեկան)", "192"},
+                                                    {"ԱԴՓ-Մ (26 տարեկան)", "312"},
+                                                    {"ԱԴՓ-Մ (36 տարեկան)", "432"},
+                                                    {"ԱԴՓ-Մ (46 տարեկան)", "552"},
+                                                    {"ԱԴՓ-Մ (56 տարեկան)", "672"}
                                             };
-                                            for(String vaccine : vaccines){
+
+                                            for (String[] vaccine : vaccines) {
                                                 Map<String, Object> vaccineData = new HashMap<>();
-                                                vaccineData.put("vaccine",vaccine);
-                                                vaccineData.put("status",false);
-                                                db.collection("users").whereEqualTo("roll","Patient").get()
+                                                vaccineData.put("vaccine", vaccine[0]);
+
+                                                // Parse the age in months using Double.parseDouble
+                                                double ageInMonths = Double.parseDouble(vaccine[1]);
+                                                // If you need it as an integer, you can round it
+                                                int ageInMonthsInt = (int) Math.round(ageInMonths);
+
+                                                vaccineData.put("ageInMonths", ageInMonthsInt);
+                                                vaccineData.put("status", false);
+
+                                                db.collection("users").whereEqualTo("roll", "Patient").get()
                                                         .addOnSuccessListener(queryDocumentSnapshots1 -> {
-                                                            for(QueryDocumentSnapshot documentSnapshot2 : queryDocumentSnapshots1){
+                                                            for (QueryDocumentSnapshot documentSnapshot2 : queryDocumentSnapshots1) {
                                                                 String patientId = documentSnapshot2.getId();
                                                                 db.collection("users").document(patientId)
                                                                         .collection("children").document(child.getId())
@@ -180,6 +189,8 @@ public class DoctorMessages extends Fragment {
                                                             }
                                                         });
                                             }
+
+
                                         }
                                     }
                                 })

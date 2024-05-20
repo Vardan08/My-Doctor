@@ -19,6 +19,7 @@ import com.example.mydoctor.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.Map;
 
@@ -52,6 +53,22 @@ public class PatientData extends Fragment {
         progressDialog.setMessage("Loading child data...");
         progressDialog.show();
         TextView patientQuestionnaire = view.findViewById(R.id.patientQuestionnaire);
+        assert currentUser != null;
+        db.collection("requests").whereEqualTo("doctorId",currentUser.getUid()).whereEqualTo("childId",childId).get()
+                .addOnCompleteListener(task -> {
+                    progressDialog.dismiss();
+                    if(task.isSuccessful()){
+                        for(QueryDocumentSnapshot document: task.getResult()){
+                            String status = document.getString("status");
+                            if(status != null){
+                                if(status.equals("pending")){
+                                    patientQuestionnaire.setVisibility(View.GONE);
+                                }
+                            }
+                        }
+                    }
+                });
+
         patientQuestionnaire.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

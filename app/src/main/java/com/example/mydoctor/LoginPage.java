@@ -1,10 +1,10 @@
 package com.example.mydoctor;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -16,10 +16,22 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.work.Data;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+
 import com.example.mydoctor.data_structures.User;
 import com.example.mydoctor.doctors_classes.DoctorsHomePage;
 import com.example.mydoctor.forgot_password_classes.ForgotPassword;
 import com.example.mydoctor.patients_classes.PatientsHomePage;
+import com.example.mydoctor.workers.VaccinationReminderWorker;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,6 +40,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class LoginPage extends AppCompatActivity {
     Button login;
@@ -36,10 +49,20 @@ public class LoginPage extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.login_page);
+
+        // Check for notification permissions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        if(currentUser != null && currentUser.isEmailVerified())
-        {
+        if (currentUser != null && currentUser.isEmailVerified()) {
             ProgressDialog progressDialog = new ProgressDialog(LoginPage.this);
             progressDialog.setMessage("Loading...");
             progressDialog.setCancelable(false);
@@ -56,28 +79,30 @@ public class LoginPage extends AppCompatActivity {
                             openDoctorsHomePage();
                             progressDialog.dismiss();
                         } else if ("Patient".equals(roll)) {
+                            Data inputData = new Data.Builder()
+                                    .putString("userId", currentUser.getUid())
+                                    .build();
+                            PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(VaccinationReminderWorker.class, 15, TimeUnit.MINUTES)
+                                    .setInputData(inputData)
+                                    .build();
+                            WorkManager.getInstance(this).enqueueUniquePeriodicWork("VaccinationReminder", ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest);
                             openPatientHomePage();
                             progressDialog.dismiss();
                         }
                     } else {
-                        Toast.makeText(LoginPage.this, "No such user",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginPage.this, "No such user", Toast.LENGTH_SHORT).show();
                         progressDialog.dismiss();
                     }
                 } else {
-                    Toast.makeText(LoginPage.this, "Error checking user roll",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginPage.this, "Error checking user roll", Toast.LENGTH_SHORT).show();
                     progressDialog.dismiss();
                 }
             });
         }
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.login_page);
-        Toast.makeText(this, "hi", Toast.LENGTH_SHORT).show();
 
+        // Initialize UI components
         TextView createAccountTextView = findViewById(R.id.create_account);
         TextView forgotPasswordTextView = findViewById(R.id.forgot_password);
-
 
         setClickableSpan(createAccountTextView, "Create Account", new ClickableSpan() {
             @Override
@@ -103,9 +128,9 @@ public class LoginPage extends AppCompatActivity {
             public void onClick(View v) {
                 String email = Objects.requireNonNull(emailText.getText()).toString().trim();
                 String password = passText.getText().toString().trim();
-                if(email.isEmpty() || password.isEmpty()){
+                if (email.isEmpty() || password.isEmpty()) {
                     Toast.makeText(LoginPage.this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
-                }else {
+                } else {
                     signIn(email, password);
                 }
             }
@@ -129,7 +154,7 @@ public class LoginPage extends AppCompatActivity {
                         Log.d("myuservalue", "" + user);
                         if (user != null && user.isEmailVerified()) {
                             checkUserRoll(user);
-                        }else {
+                        } else {
                             // Email is not verified
                             Toast.makeText(LoginPage.this, "Email is not verified. Please check your email.",
                                     Toast.LENGTH_SHORT).show();
@@ -155,16 +180,13 @@ public class LoginPage extends AppCompatActivity {
                         openPatientHomePage();
                     }
                 } else {
-                    Toast.makeText(LoginPage.this, "No such user",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginPage.this, "No such user", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(LoginPage.this, "Error checking user roll",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginPage.this, "Error checking user roll", Toast.LENGTH_SHORT).show();
             }
         });
     }
-
 
     private void setClickableSpan(TextView textView, String clickableText, ClickableSpan clickableSpan) {
         String textViewText = textView.getText().toString();
@@ -197,12 +219,12 @@ public class LoginPage extends AppCompatActivity {
                                     Toast.makeText(this, "cant fetch metadata", Toast.LENGTH_SHORT).show();
                                     return;
                                 }
-                                assert snapshot != null:"data snapshot is null when it is not expected";
+                                assert snapshot != null : "data snapshot is null when it is not expected";
 
                                 Intent intent = new Intent(LoginPage.this, DoctorsHomePage.class);
                                 User userMetadata = snapshot.toObject(User.class);
 
-                                intent.putExtra("USER",userMetadata);
+                                intent.putExtra("USER", userMetadata);
 
                                 startActivity(intent);
                                 finish();
@@ -226,12 +248,12 @@ public class LoginPage extends AppCompatActivity {
                                     Toast.makeText(this, "cant fetch metadata", Toast.LENGTH_SHORT).show();
                                     return;
                                 }
-                                assert snapshot != null:"data snapshot is null when it is not expected";
+                                assert snapshot != null : "data snapshot is null when it is not expected";
 
                                 Intent intent = new Intent(LoginPage.this, PatientsHomePage.class);
                                 User userMetadata = snapshot.toObject(User.class);
 
-                                intent.putExtra("USER",userMetadata);
+                                intent.putExtra("USER", userMetadata);
 
                                 startActivity(intent);
                                 finish();
@@ -242,12 +264,11 @@ public class LoginPage extends AppCompatActivity {
             Toast.makeText(this, "Error opening LoginPage: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
+
     private void openForgotPassword() {
         emailText.setText("");
         passText.setText("");
         Intent intent = new Intent(LoginPage.this, ForgotPassword.class);
         startActivity(intent);
     }
-
-
 }

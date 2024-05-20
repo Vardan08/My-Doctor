@@ -32,7 +32,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
@@ -40,28 +39,29 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 public class TodayPatients extends Fragment {
 
     private ArrayList<String> spinnerArrList;
-    private ArrayAdapter<String> spinnerArrAdapter;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
     private LinearLayout container;
-    private User user;
-    private List<DocumentSnapshot> patientSnapshots = new ArrayList<>();
+    private final List<DocumentSnapshot> patientSnapshots = new ArrayList<>();
     private String patientId;
+    private SearchView searchView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true); // Retain the fragment instance across configuration changes
         if (getArguments() != null) {
-            user = getArguments().getParcelable("USER");
+            User user = getArguments().getParcelable("USER");
         }
 
         if (spinnerArrList == null) {
@@ -76,12 +76,12 @@ public class TodayPatients extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_today_patients, container, false);
         Spinner spinner = view.findViewById(R.id.spinner2);
-        SearchView searchView = view.findViewById(R.id.search_view);
+        searchView = view.findViewById(R.id.search_view);
         TextView calendarDataTextView = view.findViewById(R.id.calendarDataTextView);
         calendarDataTextView.setVisibility(View.GONE);
 
         // Initialize ArrayAdapter with default selection and apply it
-        spinnerArrAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, spinnerArrList);
+        ArrayAdapter<String> spinnerArrAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, spinnerArrList);
         spinnerArrAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(spinnerArrAdapter);
         spinner.setSelection(0, false); // Set "Choose filter" as default
@@ -155,12 +155,19 @@ public class TodayPatients extends Fragment {
                     searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                         @Override
                         public boolean onQueryTextSubmit(String query) {
-                            return false;
+                            if (query.isEmpty()) {
+                                visits();
+                            } else {
+                                visitChildrenFilter(query);
+                            }
+                            return true;
                         }
 
                         @Override
                         public boolean onQueryTextChange(String newText) {
-                            visitChildrenFilter(newText);
+                            if (newText.isEmpty()) {
+                                visits();
+                            }
                             return true;
                         }
                     });
@@ -173,15 +180,19 @@ public class TodayPatients extends Fragment {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
-
-
-
+        clearSearchView();
         return view;
+    }
+    private void clearSearchView() {
+        if (searchView != null) {
+            searchView.setQuery("", false);
+            searchView.clearFocus();
+        }
     }
     private void visits() {
         if (currentUser != null) {
             this.container.removeAllViews();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             df.setTimeZone(TimeZone.getDefault()); // Consider the user's time zone
             String todayString = df.format(new Date());
 
@@ -234,24 +245,51 @@ public class TodayPatients extends Fragment {
                     });
         }
     }
-    private void fetchChildrenAndAddVisitCard(String childId, String date, String selectedTime, String userInput, String meet){
-        db.collection("users").whereEqualTo("roll", "Patient").get()
+    private void fetchChildrenAndAddVisitCard(String childId, String date, String selectedTime, String userInput, String meet) {
+        db.collection("users")
+                .whereEqualTo("roll", "Patient")
+                .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                         patientId = documentSnapshot.getId();
-                        db.collection("users").document(patientId).collection("children").document(childId)
-                                .get().addOnSuccessListener(documentSnapshot2 -> {
+                        db.collection("users")
+                                .document(patientId)
+                                .collection("children")
+                                .document(childId)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot2 -> {
                                     if (documentSnapshot2.exists()) {
                                         patientSnapshots.add(documentSnapshot2);
-                                        assert currentUser != null;
-                                        addVisitCard(documentSnapshot2,childId,date,currentUser.getUid(),selectedTime,userInput,patientId,meet);
+                                        addVisitCard(documentSnapshot2, childId, date, currentUser.getUid(), selectedTime, userInput, patientId, meet);
                                     }
                                 });
                     }
                 });
     }
+    private void fetchChildrenAndAddVisitCard(String childId, String date, String selectedTime, String userInput, String meet, String doctorId) {
+        db.collection("users")
+                .whereEqualTo("roll", "Patient")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                        String patientId = documentSnapshot.getId();
+                        db.collection("users")
+                                .document(patientId)
+                                .collection("children")
+                                .document(childId)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot2 -> {
+                                    if (documentSnapshot2.exists()) {
+                                        addVisitCard(documentSnapshot2, childId, date, doctorId, selectedTime, userInput, patientId, meet);
+                                    }
+                                });
+                    }
+                });
+    }
+
+
     @SuppressLint("SetTextI18n")
-    private void addVisitCard(DocumentSnapshot child, String selectedChildId, String date, String doctorId, String selectedTime, String userInput, String patientId, String meet){
+    private void addVisitCard(DocumentSnapshot child, String selectedChildId, String date, String doctorId, String selectedTime, String userInput, String patientId, String meet) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View cardView = inflater.inflate(R.layout.card_view_layout, this.container, false);
         Map<String, Object> user = child.getData();
@@ -296,7 +334,7 @@ public class TodayPatients extends Fragment {
                         // Retrieve the entered description
                         String description = input.getText().toString().trim();
                         if(description.isEmpty()){
-                            Toast.makeText(getActivity(), "Pleas write description", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "Please write description", Toast.LENGTH_SHORT).show();
                         }else {
                             Map<String,Object> meetData = new HashMap<>();
                             meetData.put("date",date);
@@ -308,7 +346,7 @@ public class TodayPatients extends Fragment {
                                     .document(child.getId())
                                     .collection("meetings")
                                     .add(meetData).addOnSuccessListener(documentReference -> {
-                                        Toast.makeText(getActivity(), "you meet patient successfully", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getActivity(), "You met patient successfully", Toast.LENGTH_SHORT).show();
                                     });
                             db.collection("visits")
                                     .whereEqualTo("selectedChildId",child.getId())
@@ -325,7 +363,6 @@ public class TodayPatients extends Fragment {
                                             }
                                         }
                                     });
-
                         }
                     }
                 });
@@ -353,9 +390,11 @@ public class TodayPatients extends Fragment {
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
             fragmentTransaction.addToBackStack(null);
+            clearSearchView();
             fragmentTransaction.commit();
         });
     }
+
 
     private void allPatients() {
         if (currentUser != null) {
@@ -426,43 +465,49 @@ public class TodayPatients extends Fragment {
             }
         }
     }
-    private void visitChildrenFilter(String text){
-        container.removeAllViews();
-        for(DocumentSnapshot patientSnapshot : patientSnapshots){
-            String fullName = patientSnapshot.getString("fullName");
-            String childId = patientSnapshot.getId();
-            db.collection("visits").whereEqualTo("selectedChildId",childId).get()
-                    .addOnCompleteListener(task -> {
-                        if(task.isSuccessful()){
-                            patientSnapshots.clear();
-                            for(QueryDocumentSnapshot document : task.getResult()){
-                                String date = document.getString("date");
-                                String selectedTime = document.getString("selectedTime");
-                                String userInput = document.getString("userInput");
-                                String meet = document.getString("meet");
-                                if(fullName != null && fullName.toLowerCase().contains(text.toLowerCase())){
-                                    fetchChildrenAndAddVisitCard(childId,date,selectedTime,userInput,meet);
-                                }
+    private void visitChildrenFilter(String text) {
+        this.container.removeAllViews(); // Clear the existing views/cards only once at the beginning
 
+        Set<DocumentSnapshot> filteredVisitsSet = new HashSet<>();
+
+        for (DocumentSnapshot patientSnapshot : patientSnapshots) {
+            String fullName = patientSnapshot.getString("fullName");
+            String doctorId = patientSnapshot.getString("Doctor");
+            String childId = patientSnapshot.getId();
+            if (fullName != null && fullName.toLowerCase().contains(text.toLowerCase())) {
+                db.collection("visits")
+                        .whereEqualTo("selectedChildId", childId)
+                        .get()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    filteredVisitsSet.add(document);
+                                }
+                                // Call to update UI after filtering only when all queries are done
+                                if (!task.getResult().isEmpty()) {
+                                    paintSearchedCards(filteredVisitsSet, doctorId);
+                                }
+                            } else {
+                                Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
                             }
-                        }else{
-                            Toast.makeText(getContext(), "Failed to load data.", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                        });
+            }
         }
     }
-}
 
-//    private void openPatientQuestionnaire() {
-//        DoctorQuestionnaire anotherFragment = new DoctorQuestionnaire();
-//
-//        androidx.fragment.app.FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
-//
-//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//
-//        fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
-//
-//        fragmentTransaction.addToBackStack(null);
-//
-//        fragmentTransaction.commit();
-//    }
+
+    // TODO create function to paint searched cards
+    private void paintSearchedCards(Set<DocumentSnapshot> filteredVisitsSet, String doctorId) {
+        this.container.removeAllViews(); // Clear the container only once before adding new cards
+        for (DocumentSnapshot documentSnapshot : filteredVisitsSet) {
+            String childId = documentSnapshot.getString("selectedChildId");
+            String date = documentSnapshot.getString("date");
+            String selectedTime = documentSnapshot.getString("selectedTime");
+            String userInput = documentSnapshot.getString("userInput");
+            String meet = documentSnapshot.getString("meet");
+
+            fetchChildrenAndAddVisitCard(childId, date, selectedTime, userInput, meet, doctorId);
+        }
+    }
+
+}
