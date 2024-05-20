@@ -14,6 +14,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.work.WorkManager;
 
 import android.provider.MediaStore;
 import android.util.Log;
@@ -37,6 +38,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+
+import java.util.Objects;
 
 public class PatientsProfile extends Fragment {
     private User user;
@@ -268,9 +271,13 @@ public class PatientsProfile extends Fragment {
 
     private void openLoginActivity() {
         FirebaseAuth.getInstance().signOut();
-
+        cancelVaccinationReminderWorker();
         Intent intent = new Intent(getActivity(), LoginPage.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Очистите back stack
         startActivity(intent);
     }
+    private void cancelVaccinationReminderWorker() {
+        WorkManager.getInstance(getContext()).cancelUniqueWork("VaccinationReminder");
+    }
+
 }
