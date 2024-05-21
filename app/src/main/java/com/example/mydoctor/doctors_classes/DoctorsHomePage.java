@@ -12,12 +12,13 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.mydoctor.R;
 import com.example.mydoctor.data_structures.User;
 import com.example.mydoctor.doctors_classes.fragments.DoctorMessages;
+import com.example.mydoctor.doctors_classes.fragments.HistoryOfVisits;
 import com.example.mydoctor.doctors_classes.fragments.Profile;
 import com.example.mydoctor.doctors_classes.fragments.TodayPatients;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class DoctorsHomePage extends AppCompatActivity {
-    private FloatingActionButton todayPatientsButton, messagesButton, profileButton;
+    private FloatingActionButton todayPatientsButton, messagesButton, profileButton, historyPageButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +32,7 @@ public class DoctorsHomePage extends AppCompatActivity {
         todayPatientsButton = findViewById(R.id.todayPatients);
         messagesButton = findViewById(R.id.messages);
         profileButton = findViewById(R.id.profile);
+        historyPageButton = findViewById(R.id.historyPageButton);
 
         TodayPatients todayPatients = new TodayPatients();
         setNewFragment(todayPatients,user);
@@ -40,6 +42,13 @@ public class DoctorsHomePage extends AppCompatActivity {
             public void onClick(View v) {
                 Profile profile = new Profile();
                 setNewFragment(profile,user);
+            }
+        });
+        historyPageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                HistoryOfVisits historyOfPatients = new HistoryOfVisits();
+                setNewFragment(historyOfPatients,user);
             }
         });
 
