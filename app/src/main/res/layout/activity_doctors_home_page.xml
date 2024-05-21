@@ -20,11 +20,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
+
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/todayPatients"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="80dp"
+            android:layout_marginEnd="30dp"
             android:clickable="true"
             app:srcCompat="@drawable/home_page" />
 
@@ -32,7 +34,7 @@
             android:id="@+id/messages"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="80dp"
+            android:layout_marginEnd="30dp"
             android:clickable="true"
             app:srcCompat="@android:drawable/ic_dialog_email" />
 
@@ -41,7 +43,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
+            android:layout_marginEnd="30dp"
             app:srcCompat="@drawable/user" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/historyPageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            app:srcCompat="@android:drawable/ic_menu_recent_history" />
 
     </LinearLayout>
 
