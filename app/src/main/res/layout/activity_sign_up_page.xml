@@ -4,14 +4,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/scrollView"
     android:layout_width="fill_parent"
-    android:background="@drawable/sign_up_back"
+
     android:layout_height="fill_parent">
 <LinearLayout
     android:id="@+id/parentLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-
+    android:background="@drawable/sign_up_back"
     android:padding="90dp">
 
     <EditText
