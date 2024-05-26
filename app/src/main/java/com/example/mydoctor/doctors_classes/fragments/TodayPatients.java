@@ -371,7 +371,7 @@ public class TodayPatients extends Fragment {
         description.setText(userInput);
         TextView weMeet = cardView.findViewById(R.id.textViewCancel);
 
-        weMeet.setText("We meet");
+        weMeet.setText("We have met");
         weMeet.setVisibility(View.VISIBLE);
         if(meet.equals("We met")){
             weMeet.setVisibility(View.GONE);
