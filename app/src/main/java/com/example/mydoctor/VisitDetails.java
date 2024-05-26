@@ -88,8 +88,12 @@ public class VisitDetails extends Fragment {
                                                                         timeTextView.setText(documentSnapshot3.getString("selectedTime"));
                                                                         TextView descriptionTextView = view.findViewById(R.id.textDescription);
                                                                         descriptionTextView.setText(documentSnapshot3.getString("description"));
+                                                                    }else{
+                                                                        Toast.makeText(getContext(), "No data found", Toast.LENGTH_SHORT).show();
                                                                     }
                                                                 }
+                                                            }else{
+                                                                Toast.makeText(getContext(), "Error", Toast.LENGTH_SHORT).show();
                                                             }
                                                         });
                                             });
