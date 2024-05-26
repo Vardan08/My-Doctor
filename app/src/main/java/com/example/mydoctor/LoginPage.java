@@ -82,9 +82,11 @@ public class LoginPage extends AppCompatActivity {
                             Data inputData = new Data.Builder()
                                     .putString("userId", currentUser.getUid())
                                     .build();
-                            PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(VaccinationReminderWorker.class, 15, TimeUnit.MINUTES)
+
+                            PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(VaccinationReminderWorker.class, 24, TimeUnit.HOURS)
                                     .setInputData(inputData)
                                     .build();
+
                             WorkManager.getInstance(this).enqueueUniquePeriodicWork("VaccinationReminder", ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest);
                             openPatientHomePage();
                             progressDialog.dismiss();
