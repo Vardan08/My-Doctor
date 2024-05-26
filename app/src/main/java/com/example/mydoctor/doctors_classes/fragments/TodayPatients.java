@@ -474,7 +474,7 @@ public class TodayPatients extends Fragment {
                     .whereEqualTo("status","added").get()
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            patientSnapshots.clear(); // Clear existing patient snapshots
+                            allPatientSnapshots.clear(); // Clear existing patient snapshots
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 String childId = document.getString("childId");
                                 fetchUserAndAddChildCard(childId);
@@ -494,14 +494,26 @@ public class TodayPatients extends Fragment {
                         db.collection("users").document(patientId).collection("children").document(childId)
                                 .get().addOnSuccessListener(documentSnapshot2 -> {
                                     if (documentSnapshot2.exists()) {
-                                        patientSnapshots.add(documentSnapshot2);
-                                        addAllChildCard(documentSnapshot2,patientId);
+                                        allPatientSnapshots.add(documentSnapshot2);
+                                        addAllChildCard(documentSnapshot2, patientId);
                                     }
                                 });
                     }
                 });
     }
 
+    private void filterAllPatients(String query) {
+        this.container.removeAllViews(); // Clear existing views
+        String lowerCaseQuery = query.toLowerCase();
+
+        for (DocumentSnapshot document : allPatientSnapshots) {
+            String fullName = document.getString("fullName");
+            if (fullName != null && fullName.toLowerCase().contains(lowerCaseQuery)) {
+                String patientId = document.getReference().getParent().getParent().getId();
+                addAllChildCard(document, patientId);
+            }
+        }
+    }
     private void addAllChildCard(DocumentSnapshot child, String patientId) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View cardView = inflater.inflate(R.layout.card_view_layout, this.container, false);
