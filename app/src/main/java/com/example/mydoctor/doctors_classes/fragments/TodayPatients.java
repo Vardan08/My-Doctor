@@ -174,10 +174,10 @@ public class TodayPatients extends Fragment {
                                 }
 
                             } else {
-                                if(calendarDataTextView.getText().toString().equals("Calendar Data")){
-                                    visits();
-                                }else{
+                                if(!calendarDataTextView.getText().toString().equals("Calendar Data")){
                                     searchPatients(query,calendarDataTextView.getText().toString());
+                                }else{
+                                    searchPatients(query);
                                 }
                             }
                             return true;
@@ -204,6 +204,63 @@ public class TodayPatients extends Fragment {
         });
         clearSearchView();
         return view;
+    }
+    private void searchPatients(String query) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = auth.getCurrentUser();
+        assert currentUser != null;
+
+        String lowerCaseQuery = query.toLowerCase();
+
+        db.collection("users")
+                .whereEqualTo("roll", "Patient")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        container.removeAllViews();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String patientId = document.getId();
+                            db.collection("users")
+                                    .document(patientId)
+                                    .collection("children")
+                                    .whereEqualTo("Doctor", currentUser.getUid())
+                                    .get()
+                                    .addOnCompleteListener(childTask -> {
+                                        if (childTask.isSuccessful()) {
+                                            for (QueryDocumentSnapshot childDocument : childTask.getResult()) {
+                                                String fullName = childDocument.getString("fullName");
+                                                if (fullName != null && fullName.toLowerCase().contains(lowerCaseQuery)) {
+                                                    db.collection("visits")
+                                                            .whereEqualTo("selectedChildId", childDocument.getId())
+                                                            .get()
+                                                            .addOnCompleteListener(visitTask -> {
+                                                                if (visitTask.isSuccessful()) {
+                                                                    for (QueryDocumentSnapshot visitDocument : visitTask.getResult()) {
+                                                                        addVisitCard(
+                                                                                childDocument,
+                                                                                visitDocument.getString("date"),
+                                                                                visitDocument.getString("selectedTime"),
+                                                                                visitDocument.getString("userInput"),
+                                                                                patientId,
+                                                                                visitDocument.getString("meet")
+                                                                        );
+                                                                    }
+                                                                } else {
+                                                                    Log.w("Firestore", "Error getting visit documents.", visitTask.getException());
+                                                                }
+                                                            });
+                                                }
+                                            }
+                                        } else {
+                                            Log.w("Firestore", "Error getting child documents.", childTask.getException());
+                                        }
+                                    });
+                        }
+                    } else {
+                        Log.w("Firestore", "Error getting user documents.", task.getException());
+                    }
+                });
     }
     private void searchPatients(String query, String selectedDate) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
