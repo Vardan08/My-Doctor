@@ -176,7 +176,7 @@ public class TodayPatients extends Fragment {
                             } else {
                                 if(!calendarDataTextView.getText().toString().equals("Calendar Data")){
                                     searchPatients(query,calendarDataTextView.getText().toString());
-                                }else{ a
+                                }else{
                                     searchPatients(query);
                                 }
                             }
