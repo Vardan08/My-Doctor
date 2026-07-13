@@ -24,9 +24,6 @@
             android:name=".patients_classes.PatientsHomePage"
             android:exported="false" />
         <activity
-            android:name=".forgot_password_classes.PasswordVerification"
-            android:exported="false" />
-        <activity
             android:name=".forgot_password_classes.CreateNewPassword"
             android:exported="false" />
         <activity
