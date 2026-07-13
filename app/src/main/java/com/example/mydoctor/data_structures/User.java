@@ -3,7 +3,6 @@ package com.example.mydoctor.data_structures;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.List;
 import java.util.ArrayList;
 
 public class User implements Parcelable {
@@ -11,19 +10,17 @@ public class User implements Parcelable {
     private String email;
     private String mobileNumber;
     private String location;
-    private String password;
     private String roll;
     private String clinicId;
     private ArrayList<String> timeSet;
 
     public User() {}
 
-    public User(String fullName, String email, String mobileNumber, String location, String password, String roll, String clinicId, ArrayList<String> timeSet) {
+    public User(String fullName, String email, String mobileNumber, String location, String roll, String clinicId, ArrayList<String> timeSet) {
         this.fullName = fullName;
         this.email = email;
         this.mobileNumber = mobileNumber;
         this.location = location;
-        this.password = password;
         this.roll = roll;
         this.clinicId = clinicId;
         this.timeSet = timeSet;
@@ -34,10 +31,8 @@ public class User implements Parcelable {
         email = in.readString();
         mobileNumber = in.readString();
         location = in.readString();
-        password = in.readString();
         roll = in.readString();
         clinicId = in.readString();
-        List<String> tempList = in.createStringArrayList();
         timeSet = in.createStringArrayList();
     }
 
@@ -47,7 +42,6 @@ public class User implements Parcelable {
         dest.writeString(email);
         dest.writeString(mobileNumber);
         dest.writeString(location);
-        dest.writeString(password);
         dest.writeString(roll);
         dest.writeString(clinicId);
         dest.writeStringList(timeSet);
@@ -109,14 +103,6 @@ public class User implements Parcelable {
 
     public void setLocation(String location) {
         this.location = location;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getRoll() {

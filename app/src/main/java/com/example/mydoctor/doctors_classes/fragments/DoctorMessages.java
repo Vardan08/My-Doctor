@@ -144,6 +144,7 @@ public class DoctorMessages extends Fragment {
                                                     .addOnSuccessListener(aVoid -> {
                                                         Toast.makeText(getActivity(), "Patient successfully added", Toast.LENGTH_SHORT).show();
                                                         Log.d("UpdateStatus", "DocumentSnapshot successfully updated!");
+                                                        container.removeView(cardView);
                                                     })
                                                     .addOnFailureListener(e -> Log.w("UpdateStatus", "Error updating document", e));
                                             String[][] vaccines = {
@@ -164,6 +165,7 @@ public class DoctorMessages extends Fragment {
                                                     {"ԱԴՓ-Մ (56 տարեկան)", "672"}
                                             };
 
+                                            // Seed the vaccine schedule under this child's own parent only.
                                             for (String[] vaccine : vaccines) {
                                                 Map<String, Object> vaccineData = new HashMap<>();
                                                 vaccineData.put("vaccine", vaccine[0]);
@@ -176,21 +178,12 @@ public class DoctorMessages extends Fragment {
                                                 vaccineData.put("ageInMonths", ageInMonthsInt);
                                                 vaccineData.put("status", false);
 
-                                                db.collection("users").whereEqualTo("roll", "Patient").get()
-                                                        .addOnSuccessListener(queryDocumentSnapshots1 -> {
-                                                            for (QueryDocumentSnapshot documentSnapshot2 : queryDocumentSnapshots1) {
-                                                                String patientId = documentSnapshot2.getId();
-                                                                db.collection("users").document(patientId)
-                                                                        .collection("children").document(child.getId())
-                                                                        .collection("vaccines").add(vaccineData)
-                                                                        .addOnSuccessListener(queryDocumentSnapshots2 -> {
-                                                                            Toast.makeText(getActivity(), "array successfully added", Toast.LENGTH_SHORT).show();
-                                                                        });
-                                                            }
-                                                        });
+                                                db.collection("users").document(patientId)
+                                                        .collection("children").document(child.getId())
+                                                        .collection("vaccines").add(vaccineData)
+                                                        .addOnFailureListener(e -> Log.w("VaccineSeed", "Error adding vaccine", e));
                                             }
-
-
+                                            Toast.makeText(getActivity(), "Vaccination schedule created", Toast.LENGTH_SHORT).show();
                                         }
                                     }
                                 })
@@ -246,22 +239,20 @@ public class DoctorMessages extends Fragment {
                                     }
                                 })
                                 .addOnFailureListener(e -> Log.w("QueryError", "Error getting documents: ", e));
-                        db.collection("users").whereEqualTo("roll","Patient").get()
-                                .addOnSuccessListener(queryDocumentSnapshots -> {
-                                    for(QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
-                                        String patientId = documentSnapshot.getId();
-                                        db.collection("users").document(patientId).collection("children").document(child.getId())
-                                                .delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void unused) {
-                                                        Toast.makeText(getActivity(), "Document successfully deleted!", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                }).addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Toast.makeText(getActivity(), "Error deleting document", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                });
+
+                        // Remove the child from its own parent's account only.
+                        db.collection("users").document(patientId).collection("children").document(child.getId())
+                                .delete()
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        Toast.makeText(getActivity(), "Document successfully deleted!", Toast.LENGTH_SHORT).show();
+                                        container.removeView(cardView);
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(getActivity(), "Error deleting document", Toast.LENGTH_SHORT).show();
                                     }
                                 });
                     }
@@ -284,8 +275,7 @@ public class DoctorMessages extends Fragment {
         cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PatientData anotherFragment = new PatientData();
-                anotherFragment.setPatientChildData(user,patientId,child.getId());
+                PatientData anotherFragment = PatientData.newInstance(patientId, child.getId());
                 FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);

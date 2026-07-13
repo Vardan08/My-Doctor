@@ -29,6 +29,8 @@ import java.util.Map;
 
 public class PatientQuestionnaire extends Fragment {
 
+    private static final String ARG_CHILD_ID = "childId";
+
     private String childId;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -38,8 +40,21 @@ public class PatientQuestionnaire extends Fragment {
         // Required empty public constructor
     }
 
-    public void setChildId(String childId) {
-        this.childId = childId;
+    /** The child id travels in the arguments Bundle so it survives fragment recreation. */
+    public static PatientQuestionnaire newInstance(String childId) {
+        PatientQuestionnaire fragment = new PatientQuestionnaire();
+        Bundle args = new Bundle();
+        args.putString(ARG_CHILD_ID, childId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            childId = getArguments().getString(ARG_CHILD_ID);
+        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -47,7 +62,12 @@ public class PatientQuestionnaire extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_patient_questionnaire, container, false);
         this.container = view.findViewById(R.id.container);
-        assert currentUser != null;
+
+        if (currentUser == null || childId == null) {
+            Toast.makeText(getContext(), "Questionnaire is unavailable", Toast.LENGTH_SHORT).show();
+            return view;
+        }
+
         TableLayout tableLayout = view.findViewById(R.id.tableLayout);
         tableLayout.setStretchAllColumns(true);
         tableLayout.removeAllViews(); // Clear previous data
@@ -67,7 +87,7 @@ public class PatientQuestionnaire extends Fragment {
                                 if(task.isSuccessful()){
                                     for(DocumentSnapshot document : task.getResult()){
                                         String vaccineName = document.getString("vaccine");
-                                        Boolean vaccineStatus = document.getBoolean("status");
+                                        boolean vaccineStatus = Boolean.TRUE.equals(document.getBoolean("status"));
 
                                         TableRow row = new TableRow(getContext());
                                         row.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));

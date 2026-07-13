@@ -16,3 +16,7 @@ local.properties
 
 .idea/
 .gradle/
+
+# Claude Code
+.claude/
+CLAUDE.md

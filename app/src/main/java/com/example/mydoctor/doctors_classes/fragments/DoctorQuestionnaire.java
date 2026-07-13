@@ -35,6 +35,10 @@ import java.util.Map;
 
 
 public class DoctorQuestionnaire extends Fragment {
+
+    private static final String ARG_CHILD_ID = "childId";
+    private static final String ARG_PATIENT_ID = "patientId";
+
     private String childId;
     private String patientId;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -45,14 +49,36 @@ public class DoctorQuestionnaire extends Fragment {
     private LinearLayout container;
 
     public DoctorQuestionnaire(){}
-    public void setChildIdAndPatientId(String childId, String patientId) {
-        this.childId = childId;
-        this.patientId = patientId;
+
+    /** Ids travel in the arguments Bundle so they survive fragment recreation. */
+    public static DoctorQuestionnaire newInstance(String childId, String patientId) {
+        DoctorQuestionnaire fragment = new DoctorQuestionnaire();
+        Bundle args = new Bundle();
+        args.putString(ARG_CHILD_ID, childId);
+        args.putString(ARG_PATIENT_ID, patientId);
+        fragment.setArguments(args);
+        return fragment;
     }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            childId = getArguments().getString(ARG_CHILD_ID);
+            patientId = getArguments().getString(ARG_PATIENT_ID);
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view =  inflater.inflate(R.layout.fragment_doctors_questionnaire, container, false);
         this.container = view.findViewById(R.id.container);
+
+        if (childId == null || patientId == null || currentUser == null) {
+            Toast.makeText(getContext(), "Questionnaire is unavailable", Toast.LENGTH_SHORT).show();
+            return view;
+        }
+
 //        receiving = view.findViewById(R.id.receiving);
 //        receivingArrayList = new ArrayList();
 //        receivingArrayList.add("is received?");
@@ -82,7 +108,7 @@ public class DoctorQuestionnaire extends Fragment {
                                if(task.isSuccessful()){
                                    for(DocumentSnapshot document : task.getResult()){
                                        String vaccineName = document.getString("vaccine");
-                                       Boolean vaccineStatus = document.getBoolean("status");
+                                       boolean vaccineStatus = Boolean.TRUE.equals(document.getBoolean("status"));
 
                                        // Создаем новый TableRow
                                        TableRow row = new TableRow(getContext());

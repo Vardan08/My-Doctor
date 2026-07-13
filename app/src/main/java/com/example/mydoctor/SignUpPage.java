@@ -11,6 +11,9 @@ import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -145,8 +148,8 @@ public class SignUpPage extends AppCompatActivity {
         // Set up Spinner
         spinnerArrList = new ArrayList<>(Arrays.asList(getResources().getStringArray(R.array.user_roles)));
         spinnerArrAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerArrList);
-        spinnerArrAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
-        spinner.setAdapter((SpinnerAdapter) spinnerArrAdapter);
+        spinnerArrAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(spinnerArrAdapter);
 
         regionsList = new ArrayList<>();
         regionsList.add("Choose Region");
@@ -215,14 +218,11 @@ public class SignUpPage extends AppCompatActivity {
                 String location = locationEditText.getText().toString().trim();
                 String password = passwordEditText.getText().toString().trim();
                 String confirmPassword = confirmPasswordEditText.getText().toString().trim();
-                String clinicsStr = clinics.toString().trim();
-                String citiesStr = cities.toString().trim();
-                String regionsStr = regions.toString().trim();
-                Toast.makeText(SignUpPage.this, ""+timeSet, Toast.LENGTH_SHORT).show();
 
                 String selectedRole = spinner.getSelectedItem().toString();
                 if (!"Patient".equals(selectedRole) && (regions.getSelectedItemPosition() <= 0 ||
-                        cities.getSelectedItemPosition() <= 0 || clinics.getSelectedItemPosition() <= 0)) {
+                        cities.getSelectedItemPosition() <= 0 || clinics.getSelectedItemPosition() <= 0 ||
+                        selectedClinicId == null)) {
                     Toast.makeText(SignUpPage.this, "Please select region, city, and clinic", Toast.LENGTH_SHORT).show();
                     return; // Stop further execution if any region, city, or clinic is not selected
                 }
@@ -231,16 +231,14 @@ public class SignUpPage extends AppCompatActivity {
                     Toast.makeText(SignUpPage.this, "Please attach a photo", Toast.LENGTH_SHORT).show();
                     return; // Stop further execution if photo is not attached
                 }
-                if (!"Patient".equals(selectedRole) && timeSet == null) {
+                if (!"Patient".equals(selectedRole) && timeSet.isEmpty()) {
                     Toast.makeText(SignUpPage.this, "Please choose a time", Toast.LENGTH_SHORT).show();
-                    return; // Stop further execution if photo is not attached
+                    return; // Stop further execution if no consultation hour was picked
                 }
 
                 // Check if any of the fields is empty
                 if (fullName.isEmpty() || email.isEmpty() || mobileNumber.isEmpty() ||
-                        location.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() ||
-                        clinicsStr.isEmpty() || clinicsStr.equals("Choose Clinic") || citiesStr.isEmpty() ||
-                        citiesStr.equals("Choose City") || regionsStr.isEmpty() || regionsStr.equals("Choose Region")) {
+                        location.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                     Toast.makeText(SignUpPage.this, "Please fill out all the fields", Toast.LENGTH_SHORT).show();
                     return; // Stop further execution if any field is empty
                 }
@@ -288,14 +286,13 @@ public class SignUpPage extends AppCompatActivity {
                                     });
 
                                     // Assuming you create a User object to store in Firestore
+                                    // The password is never persisted — FirebaseAuth is the only store for it.
                                     User newUser;
                                     if ("Doctor".equals(selectedRole)) {
-                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, selectedClinicId,timeSet);
-                                        // The rest of your registration process follows
+                                        newUser = new User(fullName, email, mobileNumber, location, selectedRole, selectedClinicId, new ArrayList<>(timeSet));
                                     } else {
                                         // For other roles where clinicId is not required
-                                        newUser = new User(fullName, email, mobileNumber, location, password, selectedRole, null,null);
-                                        // The rest of your registration process follows
+                                        newUser = new User(fullName, email, mobileNumber, location, selectedRole, null, null);
                                     }
 
                                     // Add additional user details to Firestore
@@ -490,12 +487,13 @@ public class SignUpPage extends AppCompatActivity {
         cities.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
-                    // Code to load clinics based on the selected city
-                    String selectedCityId = cityIds.get(position - 1); // Assuming you have a similar list for city IDs
+                // cityNames has "Choose City" at index 0; cityIds has no placeholder, hence the -1.
+                if (position > 0 && position <= cityIds.size()) {
+                    String selectedCityId = cityIds.get(position - 1);
                     loadClinicsForCity(selectedCityId);
                     clinics.setVisibility(View.VISIBLE);
                 } else {
+                    selectedClinicId = null;
                     clinics.setVisibility(View.GONE); // Hide or reset clinics if "Choose City" is selected
                 }
             }
@@ -509,14 +507,17 @@ public class SignUpPage extends AppCompatActivity {
 
     }
     private void loadClinicsForCity(String cityId) {
-        clinics.setAdapter(clinicsAdapter);
+        // Reset both lists together: clinicsList carries the "Choose Clinic" placeholder at index 0,
+        // clinicIds does not, so they must stay offset by exactly one.
+        clinicsList.clear();
+        clinicIds.clear();
+        selectedClinicId = null;
+        clinicsList.add("Choose Clinic");
+
         clinicsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, clinicsList);
         clinicsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         clinics.setAdapter(clinicsAdapter);
-        // Clear the existing clinics list (except for the initial "Choose Clinic" placeholder)
-        if (clinicsList.size() > 1) {
-            clinicsList.subList(1, clinicsList.size()).clear();
-        }
+
         // Query Firestore for clinics in the selected city
         db.collection("clinics")
                 .whereEqualTo("cityId", cityId)
@@ -525,13 +526,11 @@ public class SignUpPage extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
-                            clinicsList.add("Choose Clinic");
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 String clinicName = document.getString("name"); // Assuming each clinic document has a 'name' field
+                                if (clinicName == null) continue;
                                 clinicsList.add(clinicName);
-                                String clinicIdsStr = document.getId();
-                                Log.d("ids",clinicIdsStr);
-                                clinicIds.add(clinicIdsStr);
+                                clinicIds.add(document.getId());
                             }
                             // Notify the clinicsAdapter that its dataset has changed to refresh the spinner
                             clinicsAdapter.notifyDataSetChanged();
@@ -543,8 +542,8 @@ public class SignUpPage extends AppCompatActivity {
         clinics.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
-                    // Assuming position 0 is "Choose Clinic", and clinicIds is aligned with your clinicsList
+                // Position 0 is the "Choose Clinic" placeholder, which has no matching entry in clinicIds.
+                if (position > 0 && position <= clinicIds.size()) {
                     selectedClinicId = clinicIds.get(position - 1);
                 } else {
                     selectedClinicId = null; // No clinic or "Choose Clinic" selected
@@ -564,15 +563,14 @@ public class SignUpPage extends AppCompatActivity {
         List<Task<Uri>> uploadTasks = new ArrayList<>();
 
         for (int i = 0; i < images.length; i++) {
-            ImageView imageView = images[i];
+            Drawable drawable = images[i].getDrawable();
+            if (drawable == null) continue;
+
             String imageName = "image" + i + ".jpg"; // Or generate a unique name based on the user ID
             StorageReference imageRef = storageRef.child("images/" + userId + "/" + imageName);
-            imageView.setDrawingCacheEnabled(true);
-            imageView.buildDrawingCache();
-            Bitmap bitmap = imageView.getDrawingCache();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-            byte[] data = baos.toByteArray();
+
+            byte[] data = toJpegBytes(drawable);
+            if (data == null) continue;
 
             UploadTask uploadTask = imageRef.putBytes(data);
             uploadTasks.add(uploadTask.continueWithTask(task -> {
@@ -607,6 +605,29 @@ public class SignUpPage extends AppCompatActivity {
             // Handle failure in uploading images
             dialog.dismiss();
         });
+    }
+
+    /** Renders a drawable into JPEG bytes, or null if it has no intrinsic size to draw. */
+    private byte[] toJpegBytes(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable && ((BitmapDrawable) drawable).getBitmap() != null) {
+            return compress(((BitmapDrawable) drawable).getBitmap());
+        }
+
+        int width = drawable.getIntrinsicWidth();
+        int height = drawable.getIntrinsicHeight();
+        if (width <= 0 || height <= 0) return null;
+
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, width, height);
+        drawable.draw(canvas);
+        return compress(bitmap);
+    }
+
+    private byte[] compress(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        return baos.toByteArray();
     }
 
     private void clearImages(ImageView... images) {

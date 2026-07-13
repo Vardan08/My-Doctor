@@ -34,36 +34,38 @@ public class DoctorsHomePage extends AppCompatActivity {
         profileButton = findViewById(R.id.profile);
         historyPageButton = findViewById(R.id.historyPageButton);
 
-        TodayPatients todayPatients = new TodayPatients();
-        setNewFragment(todayPatients,user);
+        // Only add the starting fragment on a fresh launch; on rotation the FragmentManager
+        // restores it, and adding again would stack a duplicate on top.
+        if (savedInstanceState == null) {
+            setNewFragment(new TodayPatients(), user);
+        }
 
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Profile profile = new Profile();
-                setNewFragment(profile,user);
+                setNewFragment(new Profile(), user);
             }
         });
         historyPageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HistoryOfVisits historyOfPatients = new HistoryOfVisits();
-                setNewFragment(historyOfPatients,user);
+                setNewFragment(new HistoryOfVisits(), user);
             }
         });
 
         todayPatientsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setNewFragment(todayPatients,user);
+                // A fresh instance each time: setArguments() throws IllegalStateException
+                // if the fragment is already added and its state has been saved.
+                setNewFragment(new TodayPatients(), user);
             }
         });
 
         messagesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DoctorMessages messages = new DoctorMessages();
-                setNewFragment(messages,user);
+                setNewFragment(new DoctorMessages(), user);
             }
         });
 

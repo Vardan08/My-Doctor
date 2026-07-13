@@ -222,18 +222,23 @@ public class AddVisit extends Fragment {
 
 
     private void getDoctorId(String selectedChildId,String date){
-        db.collection("users").whereEqualTo("roll","Patient").get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    for(QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
-                        String patientId = documentSnapshot.getId();
-                        db.collection("users").document(patientId).collection("children").document(selectedChildId)
-                                .get().addOnSuccessListener(documentSnapshot2 -> {
-                                    if (documentSnapshot2.exists()) {
-                                        String doctorId = (String) documentSnapshot2.get("Doctor");
-                                        takeDoctorHours(selectedChildId,date,doctorId);
-                                    }
-                                });
+        if (currentUser == null) return;
+
+        // The child always belongs to the signed-in parent — no need to scan every patient account.
+        db.collection("users").document(currentUser.getUid())
+                .collection("children").document(selectedChildId)
+                .get()
+                .addOnSuccessListener(childSnapshot -> {
+                    if (!childSnapshot.exists()) {
+                        Toast.makeText(getActivity(), "Child not found", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+                    String doctorId = childSnapshot.getString("Doctor");
+                    if (doctorId == null) {
+                        Toast.makeText(getActivity(), "This child has no doctor assigned", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    takeDoctorHours(selectedChildId, date, doctorId);
                 });
     }
 
@@ -241,8 +246,11 @@ public class AddVisit extends Fragment {
         db.collection("users").document(doctorId).get().addOnSuccessListener(documentSnapshot2 -> {
             if(documentSnapshot2.exists()){
                 ArrayList<String> doctorHours = (ArrayList<String>) documentSnapshot2.get("timeSet");
-                Toast.makeText(getActivity(), "" + doctorHours, Toast.LENGTH_SHORT).show();
-                assert doctorHours != null;
+                // Java assertions are stripped at runtime on Android, so this needs a real check.
+                if (doctorHours == null || doctorHours.isEmpty()) {
+                    Toast.makeText(getActivity(), "This doctor has no consultation hours set.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 // Получение текущей даты и времени
                 LocalDate today = LocalDate.now();
@@ -285,6 +293,11 @@ public class AddVisit extends Fragment {
 
 
     private void doctorHoursDialog(String selectedChildId, String date, String doctorId, ArrayList<String> doctorHours){
+        if (doctorHours.isEmpty()) {
+            Toast.makeText(getActivity(), "No free hours left on this date.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Select a hour");
         CharSequence[] childArray = doctorHours.toArray(new CharSequence[0]);
@@ -427,7 +440,7 @@ public class AddVisit extends Fragment {
 
         TextView cancel = cardView.findViewById(R.id.textViewCancel);
         cancel.setVisibility(View.VISIBLE);
-        if(meet.equals("We met")){
+        if("We met".equals(meet)){
             cancel.setVisibility(View.GONE);
         }
         cancel.setOnClickListener(new View.OnClickListener() {
@@ -443,6 +456,8 @@ public class AddVisit extends Fragment {
                                 .addOnSuccessListener(aVoid -> {
                                     Toast.makeText(getActivity(), "Visit successfully canceled", Toast.LENGTH_SHORT).show();
                                     Log.d("UpdateStatus", "DocumentSnapshot successfully deleted!");
+                                    // The card stayed on screen after cancelling until the fragment was rebuilt.
+                                    AddVisit.this.container.removeView(cardView);
                                 })
                                 .addOnFailureListener(e -> Log.w("UpdateStatus", "Error updating document", e));
                     }
