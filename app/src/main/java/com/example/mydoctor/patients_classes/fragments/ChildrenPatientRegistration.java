@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ChildrenPatientRegistration extends Fragment {
@@ -61,7 +62,6 @@ public class ChildrenPatientRegistration extends Fragment {
     private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
     String status;
     boolean isShowed;
-    Map<String, Object> child = new HashMap<>();
     String doctorName;
     ImageView childImageView;
     String selectedDoctorId;
@@ -175,6 +175,10 @@ public class ChildrenPatientRegistration extends Fragment {
         });
     }
     public void showAddChildDialog(View view) {
+        // Clear any doctor picked during a previous (possibly cancelled) add.
+        selectedDoctorId = null;
+        doctorName = null;
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         View dialogView = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_add_child, null);
         builder.setView(dialogView);
@@ -195,8 +199,12 @@ public class ChildrenPatientRegistration extends Fragment {
         editTextDOB.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
             DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(),
-                    (view1, year, month, dayOfMonth) -> editTextDOB.setText(String.format("%d/%d/%d", dayOfMonth, month + 1, year)),
+                    // Zero-padded dd/MM/yyyy — VaccinationReminderWorker parses this exact format.
+                    (view1, year, month, dayOfMonth) -> editTextDOB.setText(
+                            String.format(Locale.US, "%02d/%02d/%04d", dayOfMonth, month + 1, year)),
                     calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+            // A child cannot be born in the future.
+            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
             datePickerDialog.show();
         });
 
@@ -213,7 +221,7 @@ public class ChildrenPatientRegistration extends Fragment {
                 String birthCertDetails = editTextBirthCertDetails.getText().toString().trim();
 
 
-                if (fullName.isEmpty() || location.isEmpty() || dob.isEmpty() || birthCertDetails.isEmpty() || regions.getSelectedItemPosition() <= 0 || cities.getSelectedItemPosition() <= 0 || clinics.getSelectedItemPosition() <= 0 || doctors.getSelectedItemPosition() <= 0) {
+                if (fullName.isEmpty() || location.isEmpty() || dob.isEmpty() || birthCertDetails.isEmpty() || regions.getSelectedItemPosition() <= 0 || cities.getSelectedItemPosition() <= 0 || clinics.getSelectedItemPosition() <= 0 || doctors.getSelectedItemPosition() <= 0 || selectedDoctorId == null) {
                     Toast.makeText(getActivity(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
                 } else {
                     // Add spinner values as needed
@@ -243,12 +251,14 @@ public class ChildrenPatientRegistration extends Fragment {
         progressDialog.setMessage("Adding child...");
         progressDialog.show();
 
-
+        // Build a fresh map per child. This used to be a shared field, so a second child
+        // inherited whatever the first one left behind.
+        Map<String, Object> child = new HashMap<>();
         child.put("fullName", fullName);
         child.put("location", location);
         child.put("dob", dob);
         child.put("birthCertDetails", birthCertDetails);
-
+        child.put("Doctor", selectedDoctorId);
 
         db.collection("users").document(currentUser.getUid()).collection("children").add(child)
                 .addOnSuccessListener(documentReference -> {
@@ -516,11 +526,11 @@ public class ChildrenPatientRegistration extends Fragment {
                                 if(position > 0){
                                     String selectedDoctor = (String) parent.getItemAtPosition(position);
                                     selectedDoctorId = doctorIdMap.get(selectedDoctor);
-                                    String selectedDoctorName = doctorsList.get(position);
-                                    if(selectedDoctorId != null && selectedDoctorName != null) {
-                                        child.put("Doctor",selectedDoctorId);
-                                        doctorName = selectedDoctorName;
+                                    if(selectedDoctorId != null) {
+                                        doctorName = selectedDoctor;
                                     }
+                                } else {
+                                    selectedDoctorId = null;
                                 }
                             }
 
@@ -632,8 +642,7 @@ public class ChildrenPatientRegistration extends Fragment {
             // Make sure you are not setting the listener again if it's the ImageView that was clicked
             // This is handled by not propagating the click event from the ImageView to the CardView
             if(!(status.equals("pending"))){
-                PatientQuestionnaire anotherFragment = new PatientQuestionnaire();
-                anotherFragment.setChildId(child.getId()); // Consider passing doctorFullName too if needed in the fragment
+                PatientQuestionnaire anotherFragment = PatientQuestionnaire.newInstance(child.getId());
 
                 FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();

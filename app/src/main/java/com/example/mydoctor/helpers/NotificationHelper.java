@@ -9,9 +9,14 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import com.example.mydoctor.R;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class NotificationHelper {
 
     private static final String CHANNEL_ID = "vaccination_reminder_channel";
+
+    /** Each reminder needs its own id, otherwise a second one silently replaces the first. */
+    private static final AtomicInteger NOTIFICATION_ID = new AtomicInteger(1);
 
     public static void sendNotification(Context context, String title, String message) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -32,7 +37,7 @@ public class NotificationHelper {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-        notificationManager.notify(0, builder.build());
+        notificationManager.notify(NOTIFICATION_ID.getAndIncrement(), builder.build());
         Log.d("NotificationHelper", "Notification sent: " + title + " - " + message);
     }
 }

@@ -182,8 +182,7 @@ public class HistoryOfVisits extends Fragment {
         }
         this.container.addView(cardView);
         cardView.setOnClickListener(v -> {
-            PatientData anotherFragment = new PatientData();
-            anotherFragment.setPatientChildData(user, patientId,childDocument.getId());
+            PatientData anotherFragment = PatientData.newInstance(patientId, childDocument.getId());
             FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);

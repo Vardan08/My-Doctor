@@ -430,7 +430,7 @@ public class TodayPatients extends Fragment {
 
         weMeet.setText("We have met");
         weMeet.setVisibility(View.VISIBLE);
-        if(meet.equals("We met")){
+        if("We met".equals(meet)){
             weMeet.setVisibility(View.GONE);
         }
         weMeet.setOnClickListener(new View.OnClickListener() {
@@ -512,8 +512,7 @@ public class TodayPatients extends Fragment {
         }
         this.container.addView(cardView);
         cardView.setOnClickListener(v -> {
-            PatientData anotherFragment = new PatientData();
-            anotherFragment.setPatientChildData(user, patientId,child.getId());
+            PatientData anotherFragment = PatientData.newInstance(patientId, child.getId());
             FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);
@@ -585,8 +584,7 @@ public class TodayPatients extends Fragment {
         }
         this.container.addView(cardView);
         cardView.setOnClickListener(v -> {
-            PatientData anotherFragment = new PatientData();
-            anotherFragment.setPatientChildData(user, patientId, child.getId());
+            PatientData anotherFragment = PatientData.newInstance(patientId, child.getId());
             FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.content_of_three_buttons, anotherFragment);

@@ -70,34 +70,28 @@ public class LoginPage extends AppCompatActivity {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             DocumentReference docRef = db.collection("users").document(currentUser.getUid());
             docRef.get().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if (document.exists()) {
-                        Log.d("myUserDocument", "" + document);
-                        String roll = document.getString("roll"); // Assuming you have a 'roll' field
-                        if ("Doctor".equals(roll)) {
-                            openDoctorsHomePage();
-                            progressDialog.dismiss();
-                        } else if ("Patient".equals(roll)) {
-                            Data inputData = new Data.Builder()
-                                    .putString("userId", currentUser.getUid())
-                                    .build();
+                // Dismiss unconditionally: an unrecognised role used to leave the dialog up forever.
+                progressDialog.dismiss();
 
-                            PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(VaccinationReminderWorker.class, 24, TimeUnit.HOURS)
-                                    .setInputData(inputData)
-                                    .build();
-
-                            WorkManager.getInstance(this).enqueueUniquePeriodicWork("VaccinationReminder", ExistingPeriodicWorkPolicy.REPLACE, periodicWorkRequest);
-                            openPatientHomePage();
-                            progressDialog.dismiss();
-                        }
-                    } else {
-                        Toast.makeText(LoginPage.this, "No such user", Toast.LENGTH_SHORT).show();
-                        progressDialog.dismiss();
-                    }
-                } else {
+                if (!task.isSuccessful()) {
                     Toast.makeText(LoginPage.this, "Error checking user roll", Toast.LENGTH_SHORT).show();
-                    progressDialog.dismiss();
+                    return;
+                }
+
+                DocumentSnapshot document = task.getResult();
+                if (document == null || !document.exists()) {
+                    Toast.makeText(LoginPage.this, "No such user", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String roll = document.getString("roll"); // Assuming you have a 'roll' field
+                if ("Doctor".equals(roll)) {
+                    openDoctorsHomePage();
+                } else if ("Patient".equals(roll)) {
+                    scheduleVaccinationReminder(currentUser.getUid());
+                    openPatientHomePage();
+                } else {
+                    Toast.makeText(LoginPage.this, "Unknown user role", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -171,23 +165,42 @@ public class LoginPage extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference docRef = db.collection("users").document(user.getUid());
         docRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                DocumentSnapshot document = task.getResult();
-                if (document.exists()) {
-                    Log.d("myUserDocument", "" + document);
-                    String roll = document.getString("roll"); // Assuming you have a 'roll' field
-                    if ("Doctor".equals(roll)) {
-                        openDoctorsHomePage();
-                    } else if ("Patient".equals(roll)) {
-                        openPatientHomePage();
-                    }
-                } else {
-                    Toast.makeText(LoginPage.this, "No such user", Toast.LENGTH_SHORT).show();
-                }
-            } else {
+            if (!task.isSuccessful()) {
                 Toast.makeText(LoginPage.this, "Error checking user roll", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            DocumentSnapshot document = task.getResult();
+            if (document == null || !document.exists()) {
+                Toast.makeText(LoginPage.this, "No such user", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String roll = document.getString("roll"); // Assuming you have a 'roll' field
+            if ("Doctor".equals(roll)) {
+                openDoctorsHomePage();
+            } else if ("Patient".equals(roll)) {
+                // Also schedule here: signing in fresh must arm reminders, not just auto-login.
+                scheduleVaccinationReminder(user.getUid());
+                openPatientHomePage();
+            } else {
+                Toast.makeText(LoginPage.this, "Unknown user role", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void scheduleVaccinationReminder(String userId) {
+        Data inputData = new Data.Builder()
+                .putString("userId", userId)
+                .build();
+
+        PeriodicWorkRequest periodicWorkRequest =
+                new PeriodicWorkRequest.Builder(VaccinationReminderWorker.class, 24, TimeUnit.HOURS)
+                        .setInputData(inputData)
+                        .build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "VaccinationReminder", ExistingPeriodicWorkPolicy.UPDATE, periodicWorkRequest);
     }
 
     private void setClickableSpan(TextView textView, String clickableText, ClickableSpan clickableSpan) {
@@ -195,7 +208,11 @@ public class LoginPage extends AppCompatActivity {
         SpannableString spannableString = new SpannableString(textViewText);
 
         int startIndex = textViewText.toLowerCase().indexOf(clickableText.toLowerCase());
-        int endIndex = startIndex + clickableText.length();
+        if (startIndex < 0) {
+            // Label was translated or reworded; setSpan(-1, ...) would throw, so span the whole view.
+            startIndex = 0;
+        }
+        int endIndex = Math.min(startIndex + clickableText.length(), textViewText.length());
         spannableString.setSpan(clickableSpan, startIndex, endIndex, 0);
 
         textView.setText(spannableString);
@@ -210,61 +227,40 @@ public class LoginPage extends AppCompatActivity {
     }
 
     private void openDoctorsHomePage() {
-        try {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-            assert user != null;
-            FirebaseFirestore.getInstance().collection("users")
-                    .document(user.getUid()).addSnapshotListener(
-                            (snapshot, e) -> {
-                                if (e != null) {
-                                    Toast.makeText(this, "cant fetch metadata", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                assert snapshot != null : "data snapshot is null when it is not expected";
-
-                                Intent intent = new Intent(LoginPage.this, DoctorsHomePage.class);
-                                User userMetadata = snapshot.toObject(User.class);
-
-                                intent.putExtra("USER", userMetadata);
-
-                                startActivity(intent);
-                                finish();
-
-                            }
-                    );
-        } catch (Exception e) {
-            Toast.makeText(this, "Error opening LoginPage: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+        openHomePage(DoctorsHomePage.class);
     }
 
     private void openPatientHomePage() {
-        try {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        openHomePage(PatientsHomePage.class);
+    }
 
-            assert user != null;
-            FirebaseFirestore.getInstance().collection("users")
-                    .document(user.getUid()).addSnapshotListener(
-                            (snapshot, e) -> {
-                                if (e != null) {
-                                    Toast.makeText(this, "cant fetch metadata", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                assert snapshot != null : "data snapshot is null when it is not expected";
-
-                                Intent intent = new Intent(LoginPage.this, PatientsHomePage.class);
-                                User userMetadata = snapshot.toObject(User.class);
-
-                                intent.putExtra("USER", userMetadata);
-
-                                startActivity(intent);
-                                finish();
-
-                            }
-                    );
-        } catch (Exception e) {
-            Toast.makeText(this, "Error opening LoginPage: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    /**
+     * Reads the signed-in user's profile once and hands it to the home screen. This used to use
+     * addSnapshotListener, which stayed registered after finish() and re-launched the home screen
+     * on every subsequent write to the user document.
+     */
+    private void openHomePage(Class<?> homePage) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Not signed in", Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        FirebaseFirestore.getInstance().collection("users")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (isFinishing() || isDestroyed()) return;
+
+                    User userMetadata = snapshot.toObject(User.class);
+                    Intent intent = new Intent(LoginPage.this, homePage);
+                    intent.putExtra("USER", userMetadata);
+                    startActivity(intent);
+                    finish();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Can't fetch user profile: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show());
     }
 
     private void openForgotPassword() {
