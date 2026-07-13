@@ -45,7 +45,13 @@ public class VisitDetails extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_visit_details, container, false);
-        assert currentUser != null;
+
+        // Without these, the Firestore calls below resolve to .document(null), which throws.
+        if (currentUser == null || childId == null || doctorId == null) {
+            Toast.makeText(getContext(), "Visit details are unavailable", Toast.LENGTH_SHORT).show();
+            return view;
+        }
+
         db.collection("users").whereEqualTo("roll", "Patient").get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {

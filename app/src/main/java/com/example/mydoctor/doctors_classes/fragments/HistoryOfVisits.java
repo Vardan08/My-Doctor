@@ -138,13 +138,16 @@ public class HistoryOfVisits extends Fragment {
 
     private void fetchChildrenAndAddVisitCard(QueryDocumentSnapshot visitDocument) {
         String childId = visitDocument.getString("selectedChildId");
+        // `assert` is stripped at runtime on Android, so this needs a real check:
+        // .document(null) throws IllegalArgumentException.
+        if (childId == null) return;
+
         db.collection("users")
                 .whereEqualTo("roll", "Patient")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                         String patientId = documentSnapshot.getId();
-                        assert childId != null;
                         db.collection("users")
                                 .document(patientId)
                                 .collection("children")
@@ -158,25 +161,30 @@ public class HistoryOfVisits extends Fragment {
                     }
                 });
     }
+    /** Firestore fields are optional; render a missing one as empty rather than crashing. */
+    private String str(Object value) {
+        return value == null ? "" : value.toString();
+    }
+
     private void addVisitCard(DocumentSnapshot childDocument, DocumentSnapshot visitDocument, String patientId) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         View cardView = inflater.inflate(R.layout.card_view_layout, this.container, false);
         Map<String, Object> user = childDocument.getData();
         Map<String, Object> visit = visitDocument.getData();
-        assert currentUser != null;
+        if (user == null || visit == null) return;
+
         TextView cildFullNameTextView = cardView.findViewById(R.id.textViewFullName);
         TextView weMet = cardView.findViewById(R.id.status);
         weMet.setVisibility(View.VISIBLE);
-        assert visit != null;
-        weMet.setText(Objects.requireNonNull(visit.get("meet")).toString());
-        assert user != null;
+        // A visit missing any of these fields used to throw from Objects.requireNonNull.
+        weMet.setText(str(visit.get("meet")));
         cildFullNameTextView.setText((String) user.get("fullName"));
         TextView selectedTimeTextView = cardView.findViewById(R.id.textViewLocation);
-        selectedTimeTextView.setText(Objects.requireNonNull(visit.get("selectedTime")).toString());
+        selectedTimeTextView.setText(str(visit.get("selectedTime")));
         TextView dateTextView = cardView.findViewById(R.id.textViewDOB);
-        dateTextView.setText(Objects.requireNonNull(visit.get("date")).toString());
+        dateTextView.setText(str(visit.get("date")));
         TextView description = cardView.findViewById(R.id.textViewDoctor);
-        description.setText(Objects.requireNonNull(visit.get("userInput")).toString());
+        description.setText(str(visit.get("userInput")));
         if (user.containsKey("imageUri")) {
             Glide.with(this).load((String) user.get("imageUri")).into((ImageView) cardView.findViewById(R.id.imageViewChild));
         }

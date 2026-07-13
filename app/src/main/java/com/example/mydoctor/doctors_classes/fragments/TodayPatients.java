@@ -386,6 +386,9 @@ public class TodayPatients extends Fragment {
         }
     }
     private void fetchChildrenAndAddVisitCard(String childId, String date, String selectedTime, String userInput, String meet) {
+        // A visit missing selectedChildId would reach Firestore as .document(null), which throws.
+        if (childId == null) return;
+
         db.collection("users")
                 .whereEqualTo("roll", "Patient")
                 .get()
@@ -543,6 +546,9 @@ public class TodayPatients extends Fragment {
     }
 
     private void fetchUserAndAddChildCard(String childId) {
+        // A request missing childId would reach Firestore as .document(null), which throws.
+        if (childId == null) return;
+
         db.collection("users").whereEqualTo("roll", "Patient").get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {

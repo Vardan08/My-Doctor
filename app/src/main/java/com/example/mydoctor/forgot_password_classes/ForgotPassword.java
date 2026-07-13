@@ -45,6 +45,8 @@ public class ForgotPassword extends AppCompatActivity {
     }
     private void forgotPassword(){
         if(!isValidEmail()){
+            // Used to return silently, so the button looked broken.
+            Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
             return;
         }
         dialog.show();

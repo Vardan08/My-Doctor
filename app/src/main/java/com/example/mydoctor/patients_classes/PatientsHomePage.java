@@ -31,29 +31,31 @@ public class PatientsHomePage extends AppCompatActivity {
         profileButton = findViewById(R.id.profile);
         questionnaireButton = findViewById(R.id.questionnaireButton);
 
-        AddVisit addVisit = new AddVisit();
-        setNewFragment(addVisit,user);
-
+        // Only add the starting fragment on a fresh launch; on rotation the FragmentManager
+        // restores it, and adding again would stack a duplicate on top.
+        if (savedInstanceState == null) {
+            setNewFragment(new AddVisit(), user);
+        }
 
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PatientsProfile profile = new PatientsProfile();
-                setNewFragment(profile,user);
+                setNewFragment(new PatientsProfile(), user);
             }
         });
 
         todayPatientsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setNewFragment(addVisit,user);
+                // A fresh instance each time: setArguments() throws IllegalStateException
+                // if the fragment is already added and its state has been saved.
+                setNewFragment(new AddVisit(), user);
             }
         });
         questionnaireButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ChildrenPatientRegistration childrenPatientRegistration = new ChildrenPatientRegistration();
-                setNewFragment(childrenPatientRegistration,user);
+                setNewFragment(new ChildrenPatientRegistration(), user);
             }
         });
 
